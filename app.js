@@ -736,9 +736,13 @@ $('#btnDocxShare').addEventListener('click', async () => {
   const file = reportFile();
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: file.name });
+      // title/text 없이 파일만 보냅니다. (일부 폰은 함께 보내면 거부합니다)
+      await navigator.share({ files: [file] });
     } catch (err) {
-      if (err.name !== 'AbortError') toast(`보내지 못했어요. 'docx 저장'을 눌러 주세요. (${err.message})`);
+      if (err.name === 'AbortError') return; // 사용자가 공유창을 닫음
+      // 폰이 공유를 거부(Permission denied 등)하면 자동으로 파일로 저장해 줍니다.
+      downloadBlob(file, file.name);
+      toast(`바로 보내기가 막혀서 파일로 저장했어요. '내 파일 > 다운로드'에서 ${file.name} 을(를) 길게 눌러 공유하세요.`);
     }
     return;
   }
