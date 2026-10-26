@@ -118,3 +118,43 @@ curriculum.js                       학년별 단원 목록 (PC용과 같음)
 manifest.webmanifest, sw.js, icon*  홈 화면 설치·오프라인용
 ※ 파일을 고쳐 다시 올릴 때는 sw.js 맨 위 CACHE 이름과 index.html 의 ?v= 숫자를 함께 바꿔야
   폰이 새 화면을 받습니다.
+
+
+■ 다른 컴퓨터(예: 집 PC)에서 이어서 고치기·디버깅하기
+----------------------------------------------
+폴더를 USB 등으로 통째로 복사하지 말고, GitHub 저장소에서 받아서 작업하세요.
+그래야 고친 내용을 GitHub 에 올리고(push), 다른 컴퓨터에서 받아(pull) 계속 이어 갈 수 있습니다.
+(mobile2 폴더는 GitHub 와 연결되어 있지 않은 복사본입니다. 같은 내용이 이 mobile 저장소에 들어 있습니다)
+
+저장소 주소: https://github.com/galaxykrpark/Math-Test-SCAN
+
+[처음 한 번만] 그 컴퓨터에 준비하기
+  1) Git 설치: https://git-scm.com 에서 받아 설치합니다.
+  2) Claude Code 설치 후 로그인합니다.
+  3) 원하는 위치에서 터미널을 열고 저장소를 받습니다.
+       git clone https://github.com/galaxykrpark/Math-Test-SCAN
+     → Math-Test-SCAN 폴더가 생깁니다. (회사 PC의 mobile 폴더와 같은 내용)
+  4) 처음 push 할 때 GitHub 로그인 창이 뜨면 galaxykrpark 계정으로 로그인합니다.
+
+[작업할 때마다] 순서
+  1) 시작 전에 최신 내용 받기:   git pull
+  2) Claude Code 로 Math-Test-SCAN 폴더를 열고 고치기·디버깅을 합니다.
+  3) 끝나면 GitHub 에 올리기:    Claude Code 에 "커밋하고 push 해 줘" 라고 하거나
+       git add -A
+       git commit -m "무엇을 고쳤는지"
+       git push
+  4) 다른 컴퓨터로 돌아가면 다시 1) git pull 부터 합니다.
+  ※ 두 컴퓨터에서 동시에 고치고 pull 없이 push 하면 충돌이 날 수 있으니,
+    항상 "pull → 작업 → push" 순서를 지키세요.
+
+[알아 둘 점] Claude Code 대화 기록은 이어지지 않습니다
+  - Claude Code 의 대화 기록은 폴더 안이 아니라 각 컴퓨터의 사용자 폴더(.claude)에 저장됩니다.
+    그래서 다른 컴퓨터에서 열면 코드는 그대로지만, 이전 대화는 모르는 상태로 시작합니다.
+  - 이어서 시킬 때는 무엇을 하고 있었는지 한두 줄로 알려 주세요.
+    예) "AI 앱 자동 받기(클립보드 자동 읽기)를 실제 안드로이드 폰에서 확인하다가 ○○ 문제가 났어"
+  - 코드 구조와 설계 이유는 이 설명서와 각 파일 맨 위 설명에 적혀 있어서,
+    Claude Code 가 파일을 읽으면 대부분 이어서 작업할 수 있습니다.
+
+[화면을 PC에서 확인하기]
+  - 카메라·공유 기능은 https 주소의 폰에서만 제대로 됩니다. 고친 뒤에는 push 하고
+    Netlify 에 다시 올려(또는 자동 배포) 폰으로 확인하세요.
