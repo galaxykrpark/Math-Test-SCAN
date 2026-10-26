@@ -302,6 +302,7 @@ function downloadBlob(blob, name) {
    답을 기다리는 동안의 사진·결과는 폰에 저장해 두어서, 앱이 새로 열려도 이어집니다. (아래 '작업 저장') */
 let pending = null; // AI 앱의 답을 기다리는 중: { kind: 'grade'|'practice', tool, text }
 let lastClip = ''; // 이미 읽어 본 클립보드 글 (같은 글을 두 번 반영하지 않게)
+let awayFromApp = false; // 공유 창이나 AI 앱에 다녀왔을 수 있음 (돌아와 화면을 누르면 클립보드를 읽어 봄)
 
 const handoffBox = (kind) => $(kind === 'practice' ? '#practiceHandoff' : '#gradeHandoff');
 
@@ -355,6 +356,7 @@ async function showHandoff(kind, { files, text, what, autoSend = true }) {
         <li>
           답이 다 나오면 답 아래의 <b>복사</b> 버튼을 누르고 이 앱으로 돌아오세요.
           <span class="sub">돌아오면 자동으로 읽어서 반영해요. 답 글을 길게 눌러 선택한 뒤 <b>공유 → onemath2</b> 를 골라도 돼요.</span>
+          ${tool.returnTip ? `<span class="sub tool-tip">💡 ${tool.returnTip}</span>` : ''}
         </li>
         <li class="auto-wait">
           <p class="wait-line"><span class="spin">⏳</span> <b>AI 답을 기다리는 중…</b></p>
@@ -372,6 +374,7 @@ async function showHandoff(kind, { files, text, what, autoSend = true }) {
   const saveImages = () => files.forEach((f, i) => setTimeout(() => downloadBlob(f, f.name), i * 400));
   const send = async () => {
     const result = await shareToApp(files, text);
+    if (result === 'shared' || result === 'unsupported') awayFromApp = true;
     if (result === 'shared') msg(`${tool.label}에서 전송하고, 답이 나오면 복사해서 돌아와 주세요. 자동으로 반영해요.`);
     else if (result === 'aborted') msg('보내기를 닫았어요. 📤 보내기를 다시 눌러 주세요.');
     else if (result === 'failed') msg(`바로 보내지 못했어요. 📤 보내기를 다시 누르거나, '사진 저장'과 '지시문 복사' 후 앱에 직접 넣어 주세요.`, true);
@@ -411,13 +414,18 @@ function receiveAnswer(text, { quiet = false } = {}) {
   const kindHint = pending?.kind || 'grade';
   const looksAnswer = /"(questions|sets)"\s*:/.test(t);
   const fail = (m) => { if (!quiet || looksAnswer) handoffMsg(kindHint, m, true); return false; };
+  const ownPrompt = '지금 클립보드에는 보낸 지시문이 들어 있어요. AI 답 아래의 복사 버튼을 눌러 주세요.';
   if (!t.trim()) return fail('붙여 넣을 글이 없어요. AI 답의 복사 버튼을 먼저 눌러 주세요.');
-  if (t.includes(PROMPT_MARK)) return fail('지금 클립보드에는 보낸 지시문이 들어 있어요. AI 답 아래의 복사 버튼을 눌러 주세요.');
   if (/^\s*https?:\/\/\S+\s*$/.test(t)) return fail('대화 링크가 들어왔어요. 링크 말고 AI 답 글을 복사(또는 선택해서 공유)해 주세요.');
   let json;
-  try { json = parseAiJson(t); } catch (err) { return fail(err.message); }
+  try { json = parseAiJson(t); } catch (err) { return fail(isOwnPrompt(t) ? ownPrompt : err.message); }
   const kind = Array.isArray(json.questions) ? 'grade' : Array.isArray(json.sets) ? 'practice' : null;
   if (!kind) return fail('채점 결과나 보충 문제 모양의 답이 아니에요. AI 답 전체를 다시 복사해 주세요.');
+  // 지시문 끝의 견본 JSON 만 읽힌 경우 (지시문을 그대로 복사해 왔거나, AI가 견본을 되풀이함)
+  const isExample = kind === 'grade'
+    ? json.questions.every((q) => q?.type === '단원 이름')
+    : json.sets.every((s) => s?.type === '유형 이름');
+  if (isExample) return fail(ownPrompt);
   const engine = `${(AI_TOOLS[pending?.tool] || currentTool()).label} 앱`;
   try {
     if (kind === 'grade') {
@@ -449,13 +457,28 @@ async function readClipboardAuto() {
       if (perm?.state === 'denied') return nudgePaste();
     } catch {} // 'clipboard-read' 권한 이름을 모르는 브라우저
     let text;
-    try { text = await navigator.clipboard.readText(); } catch { return nudgePaste(); }
+    try { text = await readClipboardText(); } catch { return nudgePaste(); }
     if (!text || text === lastClip) return;
     lastClip = text;
+    awayFromApp = false;
     if (!receiveAnswer(text, { quiet: true })) nudgePaste();
   } finally {
     clipReading = false;
   }
+}
+
+// 클립보드의 글을 읽습니다. 서식 있는 글(HTML)만 넣는 앱도 있어서, 일반 글이 비어 있으면 HTML 에서 글자만 꺼냅니다.
+async function readClipboardText() {
+  const text = await navigator.clipboard.readText();
+  if (text.trim() || !navigator.clipboard.read) return text;
+  try {
+    for (const item of await navigator.clipboard.read()) {
+      if (!item.types.includes('text/html')) continue;
+      const html = await (await item.getType('text/html')).text();
+      return new DOMParser().parseFromString(html, 'text/html').body.innerText || '';
+    }
+  } catch {}
+  return text;
 }
 
 // 자동으로 못 읽었을 때 '📋 AI 답 붙여넣기' 버튼을 눈에 띄게 합니다.
@@ -469,7 +492,23 @@ function nudgePaste() {
 window.addEventListener('focus', () => setTimeout(readClipboardAuto, 300));
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') setTimeout(readClipboardAuto, 600);
+  else awayFromApp = true;
 });
+window.addEventListener('pageshow', () => setTimeout(readClipboardAuto, 600));
+document.addEventListener('resume', () => setTimeout(readClipboardAuto, 600)); // 폰이 잠시 멈춰 둔 화면을 다시 살릴 때
+window.addEventListener('blur', () => { awayFromApp = true; });
+
+// 제미나이처럼 이 앱 위에 작은 창(오버레이)으로 떠서 열리는 AI 앱은, 닫아도 이 앱이 '다시 보임'·'다시 선택됨' 신호를 받지 못해요.
+// 그래서 다녀온 뒤 화면을 처음 톡 누를 때 클립보드를 읽습니다. (안드로이드는 읽을 때마다 '붙여넣음' 알림이 떠서, 4초에 한 번만)
+let lastTapRead = 0;
+document.addEventListener('pointerdown', (e) => {
+  if (!pending || !awayFromApp || Date.now() - lastTapRead < 4000) return;
+  if (e.target.closest('.btn-paste, .btn-apply, .handoff-answer')) return; // 직접 붙여넣기 버튼은 그쪽에서 처리
+  lastTapRead = Date.now();
+  readClipboardAuto();
+}, { capture: true, passive: true });
+// 클립보드가 바뀌면 알려 주는 브라우저에서는 그때 바로 읽습니다.
+navigator.clipboard?.addEventListener?.('clipboardchange', () => setTimeout(readClipboardAuto, 200));
 
 /* ---------- 시험지 채점 ---------- */
 let examScore = null; // scoreSummary 결과 + { engine, usedAnswerKey }

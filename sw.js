@@ -1,9 +1,9 @@
 // 홈 화면에 설치한 앱의 화면 파일을 폰에 저장해 두고, 인터넷이 없을 때도 열리게 합니다.
 // 화면 파일을 고치면 CACHE 이름을 바꿔 주세요. (그래야 폰이 새 파일을 받습니다)
-const CACHE = 'onemath2-20261026a';
+const CACHE = 'onemath2-20261026c';
 const FILES = [
-  './', 'index.html', 'style.css?v=20261026m2a', 'mobile.css?v=20261026m2a',
-  'curriculum.js?v=20261026m2a', 'ai.js?v=20261026m2a', 'pdf.js?v=20261026m2a', 'app.js?v=20261026m2a',
+  './', 'index.html', 'style.css?v=20261026m2c', 'mobile.css?v=20261026m2c',
+  'curriculum.js?v=20261026m2c', 'ai.js?v=20261026m2c', 'pdf.js?v=20261026m2c', 'app.js?v=20261026m2c',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
 ];
 

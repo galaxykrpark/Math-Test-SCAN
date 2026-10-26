@@ -11,6 +11,8 @@ const AI_TOOLS = {
   gemini: {
     label: '제미나이', icon: '🔷', appUrl: 'https://gemini.google.com/app',
     keyUrl: 'https://aistudio.google.com/apikey', model: 'gemini-3.8-flash', keyHint: 'AQ. 또는 AIza로 시작 · 무료 등급 있음',
+    // 제미나이는 이 앱 위에 작은 창으로 떠서 열릴 때가 있어, 닫아도 앱이 돌아온 줄 모를 수 있어요.
+    returnTip: '제미나이가 화면 위에 작은 창으로 떠서 열렸다면, 답을 복사한 뒤 제미나이 창을 닫고 이 화면을 한 번 톡 눌러 주세요. 그때 자동으로 읽어요.',
   },
   claude: {
     label: 'Claude', icon: '🟠', appUrl: 'https://claude.ai/new',
@@ -179,51 +181,107 @@ function practiceText({ grade, count, types }) {
   return lines.join('\n');
 }
 
-// 지시문 맨 앞에 붙이는 표시. 클립보드를 자동으로 읽을 때 우리가 복사한 지시문(견본 JSON 포함)을 AI 답으로 착각하지 않게 합니다.
+// 지시문 맨 앞에 붙이는 제목. (지시문인지 가릴 때는 이 제목이 아니라 아래 ANSWER_RULE 을 봅니다)
 const PROMPT_MARK = '[onemath 채점 지시문]';
 
+// 지시문 끝의 '답 모양' 안내. 이 문장이 들어 있으면 AI 답이 아니라 우리가 보낸 지시문입니다.
+const ANSWER_RULE = '답은 설명 없이 아래 모양의 JSON 하나만 ```json 코드 블록 하나에 담아 주세요.';
+
 // AI 앱에 붙여 보낼 한 덩어리 글 (지시문 + 요청 + 답 모양)
+// JSON 을 한 줄로 쓰게 해서 답을 짧게 만듭니다. (제미나이 앱은 답이 길면 중간에 끊는 일이 많아요)
 function handoffPrompt(system, request, example, extra = '') {
   return `${PROMPT_MARK}\n${system}\n\n---\n${request}${extra ? `\n${extra}` : ''}\n\n`
-    + '답은 설명 없이 아래 모양의 JSON 하나만 ```json 코드 블록 하나에 담아 주세요. 글자 그대로의 키 이름을 쓰고, 문항이 많아도 끝까지 빠짐없이 씁니다.\n'
+    + `${ANSWER_RULE} 글자 그대로의 키 이름을 쓰고, 문항이 많아도 끝까지 빠짐없이 씁니다.`
+    + ' 들여쓰기·줄바꿈 없이 한 줄로 쓰고, JSON 안에 주석(//)을 넣지 마세요. 답 앞뒤에 이 지시문을 다시 옮겨 적지 마세요.\n'
     + example;
 }
 
-/* ---------- 붙여 넣은 AI 답 읽기 ---------- */
+// 우리가 보낸 지시문(또는 지시문만 들어 있는 글)인지 봅니다.
+// 표시 글자만으로 판단하면, 제미나이처럼 답 첫머리에 "[onemath 채점 지시문]에 따라…" 하고 표시를 되풀이하는 AI의 답까지 버리게 됩니다.
+const isOwnPrompt = (text) => String(text || '').includes(ANSWER_RULE);
+
+/* ---------- 붙여 넣은 AI 답 읽기 ----------
+   AI 앱마다 복사되는 글 모양이 달라서 넉넉하게 읽습니다.
+   - 제미나이: 코드 칸 없이 JSON 만 오거나, 설명·코드 칸이 여러 개 섞여 오고, 띄어쓰기가 줄바꿈 없는 공백(U+00A0)으로 바뀌어 오기도 합니다.
+     True/False(파이썬 모양)나 // 주석을 넣는 일도 있습니다.
+   - 공통: 둥근 따옴표, 끝에 남은 쉼표, 글 안에 그대로 들어간 줄바꿈 */
 function parseAiJson(text) {
-  let t = String(text || '').trim();
-  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) t = fence[1];
-  const a = t.indexOf('{');
-  const b = t.lastIndexOf('}');
-  if (a < 0 || b <= a) throw new Error('붙여 넣은 글에서 결과(JSON)를 찾지 못했어요. AI 답의 복사 버튼으로 답 전체를 복사해 주세요.');
-  t = t.slice(a, b + 1);
-  try {
-    return JSON.parse(t);
-  } catch {
-    // 앱에서 복사할 때 따옴표가 둥근 따옴표로 바뀌거나, 끝에 쉼표가 남거나, 글 안의 줄바꿈이 그대로 들어온 경우를 고쳐 봅니다.
-    try {
-      return JSON.parse(escapeRawNewlines(t.replace(/[“”]/g, '"').replace(/,\s*([}\]])/g, '$1')));
-    } catch {
-      throw new Error('AI 답이 중간에 끊겼거나 모양이 달라요. AI에게 "JSON을 처음부터 끝까지 다시 써 줘"라고 한 뒤 다시 복사해 주세요.');
-    }
+  const t = normalizeCopied(text);
+  const candidates = jsonCandidates(t);
+  if (!candidates.length) throw new Error('붙여 넣은 글에서 결과(JSON)를 찾지 못했어요. AI 답의 복사 버튼으로 답 전체를 복사해 주세요.');
+  for (const c of candidates) {
+    try { return JSON.parse(c); } catch {}
+    try { return JSON.parse(repairJson(c)); } catch {}
   }
+  throw new Error('AI 답이 중간에 끊겼거나 모양이 달라요. AI에게 "JSON을 처음부터 끝까지 다시 써 줘"라고 한 뒤 다시 복사해 주세요.');
 }
 
-// "..." 글 안에 그대로 들어간 줄바꿈·탭을 \n, \t 로 바꿉니다.
-function escapeRawNewlines(json) {
+// 복사하면서 섞여 들어온 보이지 않는 글자·특수 공백·둥근 따옴표를 보통 글자로 바꿉니다.
+function normalizeCopied(text) {
+  return String(text || '')
+    .replace(/[​-‍⁠﻿]/g, '')
+    .replace(/[   　]/g, ' ')
+    .replace(/[“”„″＂]/g, '"')
+    .replace(/\r\n?/g, '\n')
+    .trim();
+}
+
+// 글 안에서 JSON 으로 보이는 덩어리를 찾아, 그럴듯한 순서로 돌려줍니다.
+// questions/sets 가 들어 있는 덩어리를 먼저, 그중 긴 것(=견본보다 진짜 답)을 먼저 봅니다.
+function jsonCandidates(t) {
+  const found = [];
+  for (const m of t.matchAll(/```[a-zA-Z]*\s*([\s\S]*?)```/g)) found.push(...balancedObjects(m[1]));
+  found.push(...balancedObjects(t));
+  const score = (s) => (/"(questions|sets)"\s*:/.test(s) ? 1e9 : 0) + s.length;
+  return [...new Set(found)].filter((s) => !isOwnPrompt(s)).sort((a, b) => score(b) - score(a));
+}
+
+// 글 안의 { … } 덩어리를 괄호 짝을 맞춰 모두 꺼냅니다. (따옴표 안의 괄호는 세지 않음, 끝이 잘렸으면 끝까지)
+function balancedObjects(t) {
+  const out = [];
+  let i = t.indexOf('{');
+  while (i >= 0) {
+    let depth = 0;
+    let inString = false;
+    let end = -1;
+    for (let j = i; j < t.length; j++) {
+      const ch = t[j];
+      if (inString) {
+        if (ch === '\\') j++;
+        else if (ch === '"') inString = false;
+      } else if (ch === '"') inString = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}' && --depth === 0) { end = j; break; }
+    }
+    if (end < 0) { out.push(t.slice(i)); break; }
+    out.push(t.slice(i, end + 1));
+    i = t.indexOf('{', end + 1);
+  }
+  return out;
+}
+
+// 흔한 모양 실수를 고칩니다: 글 안의 줄바꿈·탭, // 와 /* */ 주석, True/False/None, 끝에 남은 쉼표
+function repairJson(json) {
   let out = '';
   let inString = false;
   for (let i = 0; i < json.length; i++) {
     const ch = json[i];
-    if (inString && ch === '\\') { out += ch + (json[++i] ?? ''); continue; }
-    if (ch === '"') inString = !inString;
-    if (inString && ch === '\n') out += '\\n';
-    else if (inString && ch === '\r') continue;
-    else if (inString && ch === '\t') out += '\\t';
-    else out += ch;
+    if (inString) {
+      if (ch === '\\') { out += ch + (json[++i] ?? ''); continue; }
+      if (ch === '"') inString = false;
+      if (ch === '\n') out += '\\n';
+      else if (ch === '\t') out += '\\t';
+      else out += ch;
+      continue;
+    }
+    if (ch === '"') { inString = true; out += ch; continue; }
+    if (ch === '/' && json[i + 1] === '/') { while (i < json.length && json[i] !== '\n') i++; continue; }
+    if (ch === '/' && json[i + 1] === '*') { const e = json.indexOf('*/', i + 2); i = e < 0 ? json.length : e + 1; continue; }
+    const word = /^(True|False|None)\b/.exec(json.slice(i, i + 5));
+    if (word) { out += { True: 'true', False: 'false', None: 'null' }[word[1]]; i += word[1].length - 1; continue; }
+    out += ch;
   }
-  return out;
+  return out.replace(/,(\s*[}\]])/g, '$1');
 }
 
 /* ---------- 점수 계산 (server.py score_summary 와 같음, 덧셈은 AI에게 맡기지 않습니다) ---------- */

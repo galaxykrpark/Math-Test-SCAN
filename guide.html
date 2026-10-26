@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#16161d">
+  <title>앱 사용하는 법</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <style>
+    :root {
+      --ink: #16161d; --text: #2a2a35; --muted: #6f6f80; --line: #e9e9f0; --bg: #f4f4f8; --card: #fff;
+      --violet: #7b61ff; --violet-soft: #f0edff; --lime: #d7ff3f; --lime-soft: #f6ffd6;
+      --mint: #19b38a; --mint-soft: #e3f8f1; --amber: #c26f00; --amber-soft: #fff4e2; --coral: #e5484d; --coral-soft: #fff0f0;
+      --font: "Pretendard Variable", Pretendard, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.7; word-break: keep-all; }
+    a { color: var(--violet); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+    /* 머리 */
+    .hero { background: radial-gradient(circle at 75% 10%, #4b3aa8 0, transparent 55%), var(--ink); color: #fff; padding: 56px 0 44px; }
+    .hero .tag { display: inline-block; background: var(--lime); color: var(--ink); font-weight: 800; font-size: 14px; padding: 4px 12px; border-radius: 999px; }
+    .hero h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.25; margin: 14px 0 12px; letter-spacing: -0.02em; }
+    .hero h1 .hl { color: var(--lime); }
+    .hero p { color: #c9c9d6; margin: 0; max-width: 640px; font-size: 17px; }
+    .hero .open { display: inline-block; margin-top: 22px; background: var(--violet); color: #fff; text-decoration: none; font-weight: 700; padding: 12px 20px; border-radius: 14px; }
+
+    /* 목차 */
+    .toc { position: sticky; top: 0; z-index: 5; background: rgba(244, 244, 248, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+    .toc .wrap { display: flex; gap: 8px; overflow-x: auto; padding-top: 10px; padding-bottom: 10px; scrollbar-width: none; }
+    .toc a { flex: none; text-decoration: none; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; font-size: 14px; font-weight: 600; }
+
+    /* 한눈에 보기 */
+    .flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 28px 0 8px; padding: 0; list-style: none; counter-reset: f; }
+    .flow li { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px; counter-increment: f; }
+    .flow li::before { content: counter(f); display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--ink); color: var(--lime); font-weight: 800; margin-bottom: 8px; }
+    .flow b { display: block; color: var(--ink); }
+    .flow span { font-size: 14px; color: var(--muted); }
+
+    /* 단계 */
+    section.step { background: var(--card); border-radius: 26px; padding: 32px; margin: 26px 0; box-shadow: 0 1px 2px rgba(22, 22, 29, .04), 0 8px 24px rgba(22, 22, 29, .05); scroll-margin-top: 70px; }
+    .step h2 { display: flex; align-items: center; gap: 12px; font-size: 26px; line-height: 1.3; margin: 0 0 6px; color: var(--ink); letter-spacing: -0.01em; }
+    .badge { flex: none; display: inline-grid; place-items: center; min-width: 42px; height: 42px; padding: 0 10px; border-radius: 13px; background: var(--ink); color: var(--lime); font-size: 18px; font-weight: 800; }
+    .lead { color: var(--muted); margin: 0 0 22px; }
+    .row { display: grid; grid-template-columns: 300px 1fr; gap: 36px; align-items: start; }
+    .row + .row { margin-top: 34px; padding-top: 30px; border-top: 1px dashed var(--line); }
+    .phone { margin: 0; }
+    .phone img { width: 100%; display: block; border-radius: 30px; border: 8px solid var(--ink); background: var(--ink); box-shadow: 0 12px 30px rgba(22, 22, 29, .18); }
+    .phone figcaption { text-align: center; font-size: 13px; color: var(--muted); margin-top: 10px; }
+    .paper img { border-radius: 10px; border: 0; box-shadow: 0 8px 24px rgba(22, 22, 29, .15); }
+    h3 { font-size: 19px; color: var(--ink); margin: 0 0 10px; }
+    ol.do { margin: 0 0 16px; padding: 0; list-style: none; counter-reset: d; }
+    ol.do > li { position: relative; padding-left: 40px; margin-bottom: 12px; counter-increment: d; }
+    ol.do > li::before { content: counter(d); position: absolute; left: 0; top: 1px; width: 27px; height: 27px; border-radius: 50%; background: var(--violet); color: #fff; font-size: 14px; font-weight: 800; display: grid; place-items: center; }
+    ul.dot { margin: 0 0 14px; padding-left: 20px; }
+    ul.dot li { margin-bottom: 6px; }
+    .btnlike { display: inline-block; background: var(--ink); color: var(--lime); font-weight: 700; font-size: 14px; padding: 1px 9px; border-radius: 8px; white-space: nowrap; }
+    .btnlike.light { background: var(--violet-soft); color: var(--violet); }
+    .tip, .warn, .good { border-radius: 16px; padding: 14px 16px; margin: 14px 0; font-size: 15px; }
+    .tip { background: var(--lime-soft); }
+    .warn { background: var(--amber-soft); color: #6b3e00; }
+    .good { background: var(--mint-soft); color: #0c5c46; }
+    .tip b:first-child, .warn b:first-child, .good b:first-child { display: block; margin-bottom: 2px; }
+
+    /* 연결 방식 비교 */
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 16px; }
+    .mode { border: 2px solid var(--line); border-radius: 18px; padding: 16px; }
+    .mode.rec { border-color: var(--violet); background: var(--violet-soft); }
+    .mode h4 { margin: 0 0 6px; font-size: 17px; color: var(--ink); }
+    .mode p { margin: 0; font-size: 14px; }
+    .mode .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--violet); color: #fff; margin-left: 4px; vertical-align: 2px; }
+
+    /* AI 연결 그림 */
+    .diagram { margin: 6px 0 22px; padding: 22px; background: var(--bg); border-radius: 20px; }
+    .diagram svg { width: 100%; height: auto; display: block; }
+    .mflow { display: none; margin: 0; padding: 0; list-style: none; }
+    .mflow li { position: relative; border-radius: 16px; padding: 12px 14px; font-size: 14px; background: #fff; border: 2px solid var(--line); }
+    .mflow li b { display: block; font-size: 15px; color: var(--ink); }
+    .mflow li + li { margin-top: 22px; }
+    .mflow li + li::before { content: "↓"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); color: var(--violet); font-weight: 800; line-height: 22px; }
+    .mflow .m-app { background: var(--ink); border-color: var(--ink); color: #c9c9d6; }
+    .mflow .m-app b { color: var(--lime); }
+    .mflow .m-hand { border-color: var(--violet); }
+    .mflow .m-auto { background: var(--mint-soft); border-color: var(--mint); }
+    .mflow .m-auto b { color: #0c5c46; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+
+    table.who { width: 100%; border-collapse: collapse; font-size: 15px; margin: 6px 0 14px; }
+    table.who th, table.who td { border-bottom: 1px solid var(--line); padding: 9px 8px; text-align: left; vertical-align: top; }
+    table.who th { color: var(--muted); font-weight: 600; font-size: 13px; }
+    table.who td:first-child { white-space: nowrap; font-weight: 700; color: var(--ink); }
+    .auto { color: var(--mint); font-weight: 700; white-space: nowrap; }
+    .hand { color: var(--violet); font-weight: 700; white-space: nowrap; }
+
+    details.faq { border-bottom: 1px solid var(--line); padding: 14px 0; }
+    details.faq summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+    details.faq p { margin: 8px 0 0; color: var(--text); }
+    footer { text-align: center; color: var(--muted); font-size: 14px; padding: 20px 0 50px; }
+
+    @media (max-width: 960px) { .flow { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 760px) {
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .wrap { padding: 0 16px; }
+      section.step { padding: 22px 18px; border-radius: 22px; }
+      .step h2 { font-size: 22px; }
+      .row { grid-template-columns: 1fr; gap: 20px; }
+      .phone { max-width: 300px; margin: 0 auto; width: 100%; }
+      .modes { grid-template-columns: 1fr; }
+      .diagram { padding: 14px; }
+      .diagram svg { display: none; }
+      .mflow { display: block; }
+      table.who td:first-child { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <span class="tag">선생님용 안내서</span>
+      <h1>시험지를 찍으면<br><span class="hl">채점·보충문제·PDF</span>까지, 앱 사용하는 법</h1>
+      <p>처음 앱을 연 선생님이 첫 학생 채점을 끝낼 때까지, 실제 화면을 보면서 한 단계씩 따라 할 수 있게 정리했어요. 폰에 있는 ChatGPT·제미나이·Claude 앱과 어떻게 이어지는지도 그림으로 설명합니다.</p>
+      <a class="open" href="./">📲 앱 열기</a>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="목차">
+    <div class="wrap">
+      <a href="#overview">한눈에 보기</a>
+      <a href="#install">설치</a>
+      <a href="#ai">AI 고르기</a>
+      <a href="#student">학생 정보</a>
+      <a href="#photos">사진 찍기</a>
+      <a href="#grade">AI 채점</a>
+      <a href="#score">점수·설명</a>
+      <a href="#practice">보충 문제</a>
+      <a href="#pdf">PDF 보내기</a>
+      <a href="#next">다음 학생</a>
+      <a href="#faq">자주 묻는 질문</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <!-- 한눈에 보기 -->
+    <section class="step" id="overview">
+      <h2><span class="badge">✓</span> 한눈에 보기</h2>
+      <p class="lead">화면을 위에서 아래로 내려가며 차례대로 채우면 끝나요. 한 학생에 보통 3~5분 걸립니다.</p>
+      <ol class="flow">
+        <li><b>AI 고르기</b><span>처음 한 번만. 쓰고 있는 AI 앱을 골라요</span></li>
+        <li><b>학생 정보</b><span>이름·기간·학년 입력</span></li>
+        <li><b>사진 찍기</b><span>학생 시험지 (+ 정답지)</span></li>
+        <li><b>AI로 점수계산</b><span>AI 앱으로 보내고 답 받기</span></li>
+        <li><b>결과 확인</b><span>점수·틀린 이유·보충 문제</span></li>
+        <li><b>PDF 보내기</b><span>카톡·메일로 학부모께</span></li>
+      </ol>
+    </section>
+
+    <!-- 0. 설치 -->
+    <section class="step" id="install">
+      <h2><span class="badge">0</span> 처음 한 번만: 폰에 설치하기</h2>
+      <p class="lead">학원에서 받은 앱 주소(https://로 시작)를 폰에서 열고, 홈 화면에 앱으로 추가해 두세요.</p>
+      <ul class="dot">
+        <li><b>안드로이드(크롬)</b>: 주소를 열고 오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b></li>
+        <li><b>아이폰(사파리)</b>: 주소를 열고 아래쪽 공유 버튼 <b>□↑</b> → <b>홈 화면에 추가</b></li>
+      </ul>
+      <div class="tip"><b>💡 왜 설치하나요?</b>홈 화면 아이콘으로 열면 앱처럼 전체 화면으로 열리고, 안드로이드에서는 AI 답을 <b>공유 → onemath2</b>로 바로 받는 기능도 쓸 수 있어요.</div>
+    </section>
+
+    <!-- 1. AI 고르기 -->
+    <section class="step" id="ai">
+      <h2><span class="badge">AI</span> 채점할 AI 고르기</h2>
+      <p class="lead">맨 위 칸이에요. 한 번 고르면 폰이 기억하니 다음부터는 건너뛰어도 됩니다.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/home.jpg" alt="앱을 처음 열었을 때 화면: 환영 배너와 채점할 AI 고르기 칸" loading="lazy"><figcaption>앱을 처음 열었을 때</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li>평소 쓰는 AI를 누르세요: <b>ChatGPT</b> · <b>제미나이</b> · <b>Claude</b>. 보라색 테두리가 생기면 선택된 거예요.</li>
+            <li>그 아래에서 <b>연결 방식</b>을 고르세요. 처음이라면 <b>📲 내 폰의 AI 앱으로 자동 보내기</b>를 추천해요.</li>
+            <li>오른쪽 위 작은 표시(예: <span class="btnlike light">ChatGPT · 앱</span>)로 지금 설정을 언제든 확인할 수 있고, 누르면 이 칸으로 돌아와요.</li>
+          </ol>
+          <div class="modes">
+            <div class="mode rec">
+              <h4>📲 AI 앱으로 자동 보내기 <span class="pill">추천</span></h4>
+              <p>폰에 설치된 AI 앱(구독 중인 앱 그대로)으로 사진을 보내 채점해요. <b>키 필요 없음.</b> 보내고 받는 건 앱이 자동으로 하고, 선생님은 AI 앱에서 <b>전송</b>과 <b>복사</b>만 눌러 주시면 돼요.</p>
+            </div>
+            <div class="mode">
+              <h4>🔑 API 키로 자동 채점</h4>
+              <p>AI 회사에서 받은 API 키를 한 번 넣으면, AI 앱에 갈 필요 없이 이 앱 안에서 버튼 한 번으로 끝나요. 사용한 만큼 요금이 나와요(제미나이는 무료 등급 있음).</p>
+            </div>
+          </div>
+          <div class="warn"><b>⚠️ 앱 구독과 API 키는 달라요</b>ChatGPT Plus, Gemini Advanced, Claude Pro 같은 앱 구독만 있다면 <b>AI 앱으로 자동 보내기</b>를 쓰세요. API 키는 따로 결제해야 해요.</div>
+        </div>
+      </div>
+      <div class="row">
+        <figure class="phone"><img src="guide/api.jpg" alt="API 키로 자동 채점을 골랐을 때 나타나는 키 입력 칸" loading="lazy"><figcaption>API 키 방식을 골랐을 때</figcaption></figure>
+        <div>
+          <h3>API 키 방식을 쓸 때만</h3>
+          <ol class="do">
+            <li><b>🔗 키 받는 곳</b> 링크를 눌러 AI 회사 사이트에서 키를 만들고 복사하세요.</li>
+            <li>키 칸을 길게 눌러 붙여 넣으면 "키를 이 폰에 저장했어요"가 떠요. 앞뒤 띄어쓰기가 없어야 해요.</li>
+            <li><b>모델 바꾸기</b>는 보통 그대로 두세요.</li>
+          </ol>
+          <div class="good"><b>🔒 키는 어디에 저장되나요?</b>이 폰 안에만 저장되고, 고른 AI 회사로만 보내져요. 폰을 여러 사람이 같이 쓴다면 AI 앱으로 보내기 방식이 더 안전해요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 학생 정보 -->
+    <section class="step" id="student">
+      <h2><span class="badge">1</span> 학생 정보 입력</h2>
+      <p class="lead">여기 적은 내용이 PDF 맨 위 제목과 작성 정보로 들어가요.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/student.jpg" alt="학원명, 학생 이름, 선생님 이름, 학습지 기간, 현재 학년 입력 칸" loading="lazy"><figcaption>학생 정보를 채운 모습</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li><b>학원명</b>: 한 번 적으면 폰이 기억해요.</li>
+            <li><b>학생 이름</b>, <b>선생님 이름</b>(비우면 "담임 선생님"으로 표시), <b>학습지 기간</b>(예: 10월 4주차)을 적어요.</li>
+            <li><b>현재 학년</b>을 꼭 골라 주세요. 그 학년의 단원 이름(예: 일차방정식, 정수와 유리수)으로 문제 유형을 나눠서, 유형별 점수가 교과서 단원과 딱 맞게 나와요.</li>
+          </ol>
+          <div class="tip"><b>💡 작업은 자동 저장돼요</b>AI 앱에 다녀오는 사이 앱이 새로 열려도 학생 정보·사진·채점 결과가 그대로 남아 있어요. 다음 학생을 할 때는 <span class="btnlike light">🔄 새 학생 시작</span>을 누르세요.</div>
+          <div class="warn"><b>🙈 개인정보</b>시험지 사진은 고른 AI 회사로 보내져요. 시험지에 학생 실명이 보이면 가리고 찍거나, 이름 칸에 가명을 쓰는 것을 권해요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 사진 -->
+    <section class="step" id="photos">
+      <h2><span class="badge">2</span> 시험지 · 답안지 사진 찍기</h2>
+      <p class="lead">학생이 푼 시험지는 꼭, 정답지는 있으면 함께 찍어요.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/photos.jpg" alt="학생 시험지 2장과 답안지 1장이 들어간 사진 칸" loading="lazy"><figcaption>시험지 2장 + 답안지 1장을 넣은 모습</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li><b>📝 학생 시험지</b> 칸의 <span class="btnlike">📷 사진 찍기</span>를 누르면 카메라가 열려요. 찍고 <b>확인</b>을 누르면 한 장이 들어가요.</li>
+            <li>여러 장이면 📷를 다시 눌러 이어서 찍으세요. 최대 10장까지 한 시험지로 이어서 채점해요.</li>
+            <li><b>✅ 답안지(정답)</b> 칸도 같은 방법으로 찍어요. <b>선택</b>이라 없어도 되지만, 넣으면 AI가 정답지를 기준으로 채점해서 더 정확해요.</li>
+            <li>미리 찍어 둔 사진은 <span class="btnlike light">🖼️ 앨범</span>으로 여러 장을 한꺼번에 고를 수 있어요. 잘못 넣은 사진은 오른쪽 위 <b>✕</b>로 지워요.</li>
+          </ol>
+          <div class="tip"><b>📸 잘 찍는 요령</b>밝은 곳에서, 그림자 없이, 시험지 한 장이 화면에 꽉 차게 찍어 주세요. 글씨가 선명할수록 AI가 정확하게 읽어요.</div>
+          <div class="good"><b>🏷️ 사진 구분은 앱이 해 줘요</b>AI에게 보낼 때 사진 맨 위에 <b>[학생 시험지 1/2]</b>, <b>[답안지(정답)]</b> 같은 띠를 자동으로 붙여서, AI가 어떤 사진인지 헷갈리지 않아요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. AI 채점 -->
+    <section class="step" id="grade">
+      <h2><span class="badge">🤖</span> AI로 점수계산: AI와 어떻게 연결되나요?</h2>
+      <p class="lead">사진 칸 아래 <span class="btnlike">🤖 AI로 점수계산</span>을 누르면 시작돼요. 고른 연결 방식에 따라 흐름이 달라요.</p>
+
+      <h3>📲 AI 앱으로 자동 보내기 방식</h3>
+      <div class="diagram" role="img" aria-label="onemath 앱에서 공유 창, AI 앱을 거쳐 다시 onemath 앱으로 돌아오는 흐름">
+        <svg viewBox="0 0 960 330"xmlns="http://www.w3.org/2000/svg" font-family="Pretendard Variable, Malgun Gothic, sans-serif">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7b61ff"/></marker>
+          </defs>
+          <!-- onemath -->
+          <rect x="10" y="40" width="190" height="210" rx="26" fill="#16161d"/>
+          <circle cx="45" cy="74" r="10" fill="#d7ff3f"/>
+          <text x="62" y="80" fill="#fff" font-size="17" font-weight="800">onemath2</text>
+          <rect x="30" y="100" width="150" height="40" rx="12" fill="#d7ff3f"/>
+          <text x="105" y="126" text-anchor="middle" font-size="15" font-weight="800" fill="#16161d">AI로 점수계산</text>
+          <text x="105" y="170" text-anchor="middle" font-size="13" fill="#c9c9d6">사진 + 지시문을</text>
+          <text x="105" y="188" text-anchor="middle" font-size="13" fill="#c9c9d6">자동으로 준비</text>
+          <text x="105" y="226" text-anchor="middle" font-size="13" fill="#d7ff3f" font-weight="700">④ 돌아오면 자동 채점</text>
+
+          <!-- 공유 창 -->
+          <rect x="270" y="60" width="180" height="170" rx="22" fill="#fff" stroke="#e9e9f0" stroke-width="2"/>
+          <text x="360" y="94" text-anchor="middle" font-size="16" font-weight="800" fill="#16161d">공유 창</text>
+          <rect x="296" y="112" width="128" height="34" rx="10" fill="#f0edff" stroke="#7b61ff" stroke-width="2"/>
+          <text x="360" y="134" text-anchor="middle" font-size="14" font-weight="700" fill="#7b61ff">AI 앱 선택</text>
+          <rect x="296" y="156" width="128" height="26" rx="8" fill="#f4f4f8"/>
+          <rect x="296" y="190" width="128" height="26" rx="8" fill="#f4f4f8"/>
+
+          <!-- AI 앱 -->
+          <rect x="520" y="40" width="210" height="210" rx="26" fill="#fff" stroke="#e9e9f0" stroke-width="2"/>
+          <text x="625" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="#16161d">내 폰의 AI 앱</text>
+          <rect x="540" y="92" width="120" height="40" rx="12" fill="#f4f4f8"/>
+          <text x="600" y="117" text-anchor="middle" font-size="13" fill="#6f6f80">사진·지시문</text>
+          <rect x="590" y="142" width="122" height="52" rx="12" fill="#f0edff"/>
+          <text x="651" y="164" text-anchor="middle" font-size="13" fill="#5b3fd6" font-weight="700">AI 채점 답</text>
+          <text x="651" y="183" text-anchor="middle" font-size="12" fill="#5b3fd6">(JSON)</text>
+          <rect x="590" y="204" width="122" height="30" rx="10" fill="#7b61ff"/>
+          <text x="651" y="224" text-anchor="middle" font-size="13" fill="#fff" font-weight="800">복사</text>
+
+          <!-- 클립보드 -->
+          <rect x="790" y="96" width="160" height="104" rx="20" fill="#e3f8f1"/>
+          <text x="870" y="134" text-anchor="middle" font-size="26">📋</text>
+          <text x="870" y="164" text-anchor="middle" font-size="15" font-weight="800" fill="#0c5c46">클립보드</text>
+          <text x="870" y="184" text-anchor="middle" font-size="12" fill="#0c5c46">(복사한 답이 잠시 머묾)</text>
+
+          <!-- 화살표 -->
+          <path d="M200 145 H262" stroke="#7b61ff" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+          <text x="231" y="134" text-anchor="middle" font-size="12" fill="#7b61ff" font-weight="700">자동</text>
+          <path d="M450 145 H512" stroke="#7b61ff" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+          <text x="481" y="134" text-anchor="middle" font-size="12" fill="#7b61ff" font-weight="700">①</text>
+          <path d="M712 219 C 760 219, 770 190, 790 170" stroke="#7b61ff" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+          <text x="760" y="245" text-anchor="middle" font-size="12" fill="#7b61ff" font-weight="700">③</text>
+          <path d="M870 200 C 870 290, 120 300, 105 254" stroke="#19b38a" stroke-width="3" fill="none" stroke-dasharray="7 6" marker-end="url(#ar)"/>
+          <text x="500" y="322" text-anchor="middle" font-size="14" fill="#19b38a" font-weight="700">돌아오면 앱이 클립보드의 답을 자동으로 읽어요</text>
+          <text x="600" y="30" text-anchor="middle" font-size="12" fill="#7b61ff" font-weight="700">② 전송 → AI가 채점</text>
+        </svg>
+        <ol class="mflow">
+          <li class="m-app"><b>onemath2</b> 🤖 AI로 점수계산을 누르면, 사진과 지시문을 자동으로 준비해요</li>
+          <li class="m-hand"><b>① 공유 창</b> 목록에서 쓰는 AI 앱을 골라요</li>
+          <li class="m-hand"><b>② 내 폰의 AI 앱</b> 전송을 누르면 AI가 채점해요</li>
+          <li class="m-hand"><b>③ 복사</b> AI 답 아래 복사 버튼을 누르고 돌아와요</li>
+          <li class="m-auto"><b>④ 자동 채점</b> 앱이 클립보드의 답을 읽어 점수·설명을 만들어요</li>
+        </ol>
+        <div class="legend"><span><i style="background:#7b61ff"></i>선생님이 누르는 곳 (①②③)</span><span><i style="background:#19b38a"></i>앱이 자동으로 하는 일</span></div>
+      </div>
+
+      <div class="row">
+        <figure class="phone"><img src="guide/handoff.jpg" alt="AI로 점수계산을 누른 뒤 나타나는 ChatGPT 앱으로 채점 보내기 안내 칸" loading="lazy"><figcaption>누른 뒤 나타나는 안내 칸 (공유 창이 함께 떠요)</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li><span class="btnlike">🤖 AI로 점수계산</span>을 누르면 <b>바로 폰의 공유 창</b>이 떠요. 목록에서 고른 AI 앱(예: ChatGPT)을 누르세요. <span class="hand">① 선생님</span></li>
+            <li>AI 앱이 열리면서 사진과 지시문이 들어가 있어요. <b>전송</b>을 누르면 AI가 채점을 시작해요. <span class="hand">② 선생님</span><br><small style="color:var(--muted)">입력칸에 글이 비어 있으면, 지시문이 이미 복사되어 있으니 입력칸을 길게 눌러 <b>붙여넣기</b> 후 전송하세요.</small></li>
+            <li>AI 답이 다 나오면 답 아래(또는 코드 칸)의 <b>복사</b> 버튼을 누르고 onemath 앱으로 돌아오세요. <span class="hand">③ 선생님</span></li>
+            <li>돌아오기만 하면 앱이 복사한 답을 <b>자동으로 읽어서</b> 점수를 계산해요. "✅ AI 답을 자동으로 받아 채점했어요"가 뜨면 끝! <span class="auto">④ 자동</span></li>
+          </ol>
+          <table class="who">
+            <thead><tr><th>할 일</th><th>누가</th></tr></thead>
+            <tbody>
+              <tr><td>사진·지시문 준비, 사진에 이름표 붙이기</td><td class="auto">앱이 자동</td></tr>
+              <tr><td>채점 요청 글(지시문) 쓰기·복사</td><td class="auto">앱이 자동</td></tr>
+              <tr><td>공유 창에서 AI 앱 고르기, 전송, 답 복사</td><td class="hand">선생님</td></tr>
+              <tr><td>답 읽기 → 총점·유형별 점수·상세 설명 만들기</td><td class="auto">앱이 자동</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><b>📱 폰마다 조금 달라요</b>
+            <b>안드로이드</b>: 처음 한 번 "클립보드 보기" 권한을 물으면 <b>허용</b>을 눌러 주세요. 그다음부터는 돌아오기만 하면 돼요.<br>
+            <b>아이폰</b>: 보안상 자동 읽기가 막혀 있어서, 돌아와서 <span class="btnlike">📋 AI 답 붙여넣기</span> → <b>붙여넣기</b>를 한 번 눌러 주세요.<br>
+            <b>제미나이</b>: 제미나이가 앱 화면 위에 작은 창으로 떠서 열렸다면, 답을 복사하고 제미나이 창을 닫은 뒤 onemath 화면을 <b>한 번 톡</b> 눌러 주세요. 그때 자동으로 읽어요.<br>
+            <b>다른 방법 (안드로이드, 홈 화면에 설치한 경우)</b>: AI 답 글을 길게 눌러 선택 → <b>공유</b> → <b>onemath2</b>를 고르면 앱이 열리면서 바로 반영돼요.</div>
+          <div class="warn"><b>왜 전송·복사는 직접 눌러야 하나요?</b>폰 보안 규칙상 한 앱이 다른 앱의 버튼을 대신 누르거나 화면을 읽을 수 없어요. 그래서 그 앞뒤(보내기 준비, 답 받기)를 모두 자동으로 만들었어요. 손을 전혀 대지 않는 완전 자동을 원하면 <b>API 키 방식</b>을 쓰세요.</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:34px">🔑 API 키 방식</h3>
+      <p>버튼을 누르고 1~2분 기다리면 끝이에요. 화면에 "✏️ ChatGPT가 시험지를 채점하고 있어요…"가 보이는 동안 앱을 닫지 말고 기다려 주세요. AI 앱에 갈 필요가 없어요.</p>
+    </section>
+
+    <!-- 5. 점수·설명 -->
+    <section class="step" id="score">
+      <h2><span class="badge">2-1</span> 채점 점수와 상세 설명 보기</h2>
+      <p class="lead">채점이 끝나면 화면이 자동으로 결과로 내려가요.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/score.jpg" alt="채점 점수 화면: 선생님 확인이 필요한 문항 안내, 총점 75/100, 유형별 점수 막대" loading="lazy"><figcaption>2-1 채점 점수</figcaption></figure>
+        <div>
+          <h3>2-1 채점 점수</h3>
+          <ol class="do">
+            <li><b>👀 선생님 확인이 필요한 문항</b> (주황색 칸): 글씨가 흐리거나 답이 애매해서 AI가 확실하게 채점하지 못한 문항이에요. AI가 어떻게 읽었는지 적혀 있으니 <b>시험지를 직접 보고 판단</b>해 주세요. 없으면 이 칸은 나오지 않아요.</li>
+            <li><b>총점</b>: 동그란 그래프와 정답 문항 수. 덧셈은 AI가 아니라 앱이 직접 계산해서 틀리지 않아요.</li>
+            <li><b>유형별 점수</b>: 단원별 막대그래프로, 어느 단원이 약한지 한눈에 보여요.</li>
+            <li><b>▶ 문항별 채점 결과 보기</b>를 누르면 번호마다 학생 답·정답·점수 표가 펼쳐져요.</li>
+          </ol>
+          <div class="tip"><b>💡 부분 점수</b>서술형이나 칸이 여러 개인 문항은 부분 점수가 들어갈 수 있어요. 예시의 10번은 식을 맞게 세워 10점 중 5점을 받았어요.</div>
+        </div>
+      </div>
+      <div class="row">
+        <figure class="phone"><img src="guide/detail.jpg" alt="상세 설명 화면: 채점 기준, 번호로 보기, 틀린 문제 살펴보기, 선생님 확인 필요, 보완 포인트" loading="lazy"><figcaption>2-2 상세 설명</figcaption></figure>
+        <div>
+          <h3>2-2 상세 설명</h3>
+          <ul class="dot">
+            <li><b>📏 채점 기준</b>: 배점을 어떻게 적용했는지, 답안지를 기준으로 했는지 적혀 있어요.</li>
+            <li><b>🔢 번호로 보기</b>: 맞은 문제(초록), 부분 점수(주황), 틀린 문제(빨강) 번호. 학생에게 오답 번호를 알려 줄 때 편해요.</li>
+            <li><b>✏️ 틀린 문제 살펴보기</b>: 학생 답 → 정답, 그리고 <b>왜 틀렸는지</b> 한 문장으로 알려 줘요. (예: "괄호 앞의 −를 x에만 곱함")</li>
+            <li><b>⚠️ 선생님 확인 필요</b>, <b>💡 보완 포인트</b>: 가장 먼저 복습할 부분을 짚어 줘요. 상담할 때 그대로 활용하세요.</li>
+          </ul>
+          <div class="warn"><b>AI 채점은 보조 도구예요</b>대부분 정확하지만, 흘려 쓴 글씨나 서술형은 틀릴 수 있어요. 주황색으로 표시된 문항과 점수가 이상해 보이는 문항은 꼭 직접 확인해 주세요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. 보충 -->
+    <section class="step" id="practice">
+      <h2><span class="badge">2-3</span> 보충 문제 만들기</h2>
+      <p class="lead">학생이 틀린 내용을 바탕으로, 약한 유형만 골라 연습 문제를 만들어요.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/practice.jpg" alt="보충 문제 화면: 유형 선택 목록, 문제 수 선택, 만들어진 보충 문제" loading="lazy"><figcaption>보충 문제를 만든 모습</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li>점수가 <b>70% 미만인 유형</b>은 미리 체크되어 있어요. 더 연습시키고 싶은 유형을 추가로 체크해도 돼요.</li>
+            <li><b>유형마다</b> 3·5·10문제 중에서 고르고 <span class="btnlike">🧩 보충 문제 만들기</span>를 누르세요.</li>
+            <li>AI 앱 방식이면 채점 때와 똑같이 <b>공유 창 → AI 앱에서 전송 → 복사 → 돌아오기</b>로 자동 반영돼요. API 키 방식이면 기다리기만 하면 돼요.</li>
+            <li><b>정답·풀이 보기</b>를 켜면 정답과 풀이가 보이고, <span class="btnlike light">🖨️ 학생용 인쇄</span>를 누르면 앞쪽은 문제지, 뒤쪽은 선생님용 정답·풀이로 인쇄돼요.</li>
+          </ol>
+          <div class="good"><b>🎯 학생 맞춤 문제</b>"(−3)×(+4)를 −8로 계산함"처럼 학생이 실제로 틀린 내용을 AI에게 함께 보내서, 바로 그 실수를 연습하는 문제가 나와요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. PDF -->
+    <section class="step" id="pdf">
+      <h2><span class="badge">3</span> 채점 결과 PDF로 보내기</h2>
+      <p class="lead">점수, 유형별 점수, 상세 설명, 보충 문제까지 PDF 파일 하나로 만들어 학부모님께 보내요.</p>
+      <div class="row">
+        <figure class="phone"><img src="guide/pdf.jpg" alt="채점 결과 제출 화면: PDF 보내기 버튼과 폰에 PDF 저장 버튼" loading="lazy"><figcaption>3. 채점 결과 제출</figcaption></figure>
+        <div>
+          <ol class="do">
+            <li><span class="btnlike">📤 PDF 보내기 (카톡·메일·드라이브)</span>를 누르면 공유 창이 떠요. <b>카카오톡</b>을 골라 학부모님 대화방으로 보내거나, 메일·구글 드라이브를 고르세요.</li>
+            <li>보내기가 안 되는 폰이면 <span class="btnlike light">💾 폰에 PDF 저장</span>을 누르세요. 다운로드 폴더(아이폰은 '파일' 앱)에 저장되니, 거기서 파일을 길게 눌러 공유하면 돼요.</li>
+          </ol>
+          <p style="color:var(--muted);font-size:14px">두 버튼은 순서가 없어요. 둘 중 하나만 누르면 됩니다. 파일 이름은 <b>학생이름_기간_채점결과.pdf</b>로 만들어져요.</p>
+        </div>
+      </div>
+      <div class="row">
+        <figure class="phone paper"><img src="guide/pdfpage.jpg" alt="만들어진 PDF 첫 페이지: 학생 이름, 총점, 유형별 점수 표, 상세 설명" loading="lazy"><figcaption>만들어진 PDF 첫 페이지 (A4)</figcaption></figure>
+        <div>
+          <h3>PDF에 들어가는 내용</h3>
+          <ul class="dot">
+            <li>제목: <b>○○○ 학생 수학 시험지 채점 결과</b>, 학원명·학년·기간·선생님·작성일</li>
+            <li><b>1. 채점 점수</b>: 총점, 유형별 점수 표(70% 미만은 분홍색), 선생님 확인 필요 문항</li>
+            <li><b>2. 상세 설명</b>: 채점 기준, 맞은·틀린 번호, 틀린 이유, 보완 포인트, 문항별 결과표</li>
+            <li><b>3. 보충 문제</b> (만들었다면): 문제와 답 쓰는 칸, 새 페이지에 정답과 풀이</li>
+          </ul>
+          <div class="tip"><b>💡 인터넷이 없어도 PDF는 만들어져요</b>PDF는 폰 안에서 바로 만들어져서 외부 서버로 가지 않아요. 페이지 아래에는 쪽 번호(1 / 4)가 들어가요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. 다음 학생 -->
+    <section class="step" id="next">
+      <h2><span class="badge">↻</span> 다음 학생 채점하기</h2>
+      <ol class="do">
+        <li>1단계 학생 정보 아래의 <span class="btnlike light">🔄 새 학생 시작 (사진·채점 결과 지우기)</span>를 누르세요.</li>
+        <li>학생 이름·기간·사진·채점 결과·보충 문제가 지워져요. <b>학원명, 선생님 이름, 학년, AI 설정은 그대로</b> 남아요.</li>
+        <li>학생 이름을 적고 사진부터 다시 찍으면 돼요.</li>
+      </ol>
+    </section>
+
+    <!-- FAQ -->
+    <section class="step" id="faq">
+      <h2><span class="badge">?</span> 자주 묻는 질문</h2>
+      <details class="faq"><summary>공유 창에 AI 앱이 안 보여요.</summary><p>목록 끝의 <b>더보기</b>(또는 <b>편집</b>)에서 찾아보세요. 그래도 없으면 안내 칸의 <b>💾 사진 저장</b>과 <b>📋 지시문 복사</b>를 누른 뒤 <b>↗ 앱 열기</b>로 AI 앱을 열어, 사진을 올리고 지시문을 붙여 넣으세요.</p></details>
+      <details class="faq"><summary>돌아왔는데 점수가 자동으로 안 나와요.</summary><p>AI 답의 <b>복사</b> 버튼을 눌렀는지 확인하세요. 아이폰이거나 클립보드 권한을 거절했다면 <b>📋 AI 답 붙여넣기</b>를 누르세요. 그래도 안 되면 <b>자동으로 안 들어오면: 직접 붙여넣기</b>를 열어 칸을 길게 눌러 붙여 넣고 <b>결과 반영</b>을 누르세요.</p></details>
+      <details class="faq"><summary>"결과(JSON)를 찾지 못했어요" / "답이 중간에 끊겼어요"가 떠요.</summary><p>AI 답 전체가 복사되지 않은 경우예요. AI 앱에서 "JSON을 처음부터 끝까지 다시 써 줘"라고 보낸 뒤, 코드 칸의 복사 버튼으로 다시 복사해 오세요.</p></details>
+      <details class="faq"><summary>"지금 클립보드에는 보낸 지시문이 들어 있어요"라고 나와요.</summary><p>AI 답이 아니라 앱이 보낸 지시문이 아직 복사되어 있다는 뜻이에요. AI 앱으로 돌아가 답 아래의 복사 버튼을 누르고 다시 오세요.</p></details>
+      <details class="faq"><summary>AI 앱에 다녀왔더니 앱이 처음부터 다시 열렸어요.</summary><p>걱정하지 마세요. 학생 정보·사진·기다리던 요청이 저장되어 있어서 그대로 이어져요. 답을 복사해 왔다면 자동으로 반영돼요. (12시간이 지난 작업은 이어지지 않아요)</p></details>
+      <details class="faq"><summary>시험지 사진을 바꿨더니 점수가 사라졌어요.</summary><p>사진이 바뀌면 이전 점수가 맞지 않아서 지워져요. <b>AI로 점수계산</b>을 다시 눌러 주세요.</p></details>
+      <details class="faq"><summary>"API 키가 맞지 않아요" / "사용량이 넘쳤어요"가 떠요.</summary><p>키를 다시 복사해 넣으세요(앞뒤 띄어쓰기 없이). 사용량 초과는 무료 사용량을 넘었거나 결제가 필요한 상태예요. 잠시 뒤 다시 하거나 AI 앱으로 보내기 방식을 쓰세요.</p></details>
+      <details class="faq"><summary>시험지 사진과 채점 결과는 어디에 저장되나요?</summary><p>이 폰 안에만 저장돼요. 앱 서버에는 아무것도 저장되지 않고, 사진은 채점할 때 고른 AI 회사로만 보내져요.</p></details>
+    </section>
+  </main>
+
+  <footer>onemath2 AI 수학 채점 · 선생님용 앱 사용 안내서 · <a href="./">앱으로 돌아가기</a></footer>
+</body>
+</html>
