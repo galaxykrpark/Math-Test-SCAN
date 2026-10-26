@@ -7,19 +7,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="onemath">
-  <title>onemath 수학 채점</title>
+  <meta name="apple-mobile-web-app-title" content="onemath2">
+  <title>onemath2 수학 채점</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <!-- ?v= 를 붙여 브라우저가 예전에 저장해 둔 파일 대신 새 파일을 받게 합니다 -->
-  <link rel="stylesheet" href="style.css?v=20261026o">
-  <link rel="stylesheet" href="mobile.css?v=20261026o">
+  <link rel="stylesheet" href="style.css?v=20261026m2a">
+  <link rel="stylesheet" href="mobile.css?v=20261026m2a">
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <span class="brand"><span class="brand-dot"></span>onemath</span>
+      <span class="brand"><span class="brand-dot"></span>onemath2</span>
       <button type="button" class="menu-pill" id="aiPill" aria-label="AI 선택으로 이동">AI 수학 채점</button>
     </div>
   </header>
@@ -49,7 +49,7 @@
         <div class="tool-pick" role="radiogroup" aria-label="AI 도구" id="toolPick"></div>
         <div class="mode-pick" role="radiogroup" aria-label="연결 방식">
           <label class="mode"><input type="radio" name="aiMode" value="app">
-            <span><b>📲 내 폰의 AI 앱으로 보내기</b><small>사진·지시문을 앱으로 공유하고, 답을 복사해 붙여 넣어요. 키 필요 없음</small></span></label>
+            <span><b>📲 내 폰의 AI 앱으로 자동 보내기</b><small>버튼 한 번에 사진·지시문을 AI 앱으로 보내고, AI 답을 복사해 돌아오면 자동으로 채점돼요. 키 필요 없음</small></span></label>
           <label class="mode"><input type="radio" name="aiMode" value="api">
             <span><b>🔑 API 키로 자동 채점</b><small>키를 한 번 넣으면 이 앱 안에서 버튼 한 번에 끝나요</small></span></label>
         </div>
@@ -94,6 +94,8 @@
             </select>
           </div>
         </div>
+        <button type="button" class="btn-outline wide new-student" id="btnNewStudent">🔄 새 학생 시작 (사진·채점 결과 지우기)</button>
+        <p class="hint">작업 중인 사진과 채점 결과는 이 폰에 저장돼서, 앱을 다시 열어도 이어서 할 수 있어요.</p>
       </section>
 
       <!-- 2. 시험지 · 답안지 사진 -->
@@ -185,9 +187,9 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="curriculum.js?v=20261026o"></script>
-  <script src="ai.js?v=20261026o"></script>
-  <script src="pdf.js?v=20261026o"></script>
-  <script src="app.js?v=20261026o"></script>
+  <script src="curriculum.js?v=20261026m2a"></script>
+  <script src="ai.js?v=20261026m2a"></script>
+  <script src="pdf.js?v=20261026m2a"></script>
+  <script src="app.js?v=20261026m2a"></script>
 </body>
 </html>

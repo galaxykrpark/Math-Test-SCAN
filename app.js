@@ -52,6 +52,7 @@ document.querySelectorAll('input[name="aiMode"]').forEach((r) => r.addEventListe
   saveAiSettings();
   renderToolPick();
   clearHandoffs();
+  prepareGradeFiles();
 }));
 $('#apiKey').addEventListener('change', (e) => {
   aiSettings.keys[aiSettings.tool] = e.target.value.trim();
@@ -86,6 +87,39 @@ const studentInfo = () => ({
   period: $('#reportPeriod').value.trim(),
   grade: $('#actualGrade').value,
 });
+
+/* ---------- 작업 저장 ----------
+   AI 앱에 다녀오거나 AI 답을 공유받으면 폰이 이 앱을 새로 열 수 있어서,
+   학생 정보·사진·채점 결과·기다리는 중인 요청을 폰(IndexedDB)에 저장해 두고 다시 열 때 이어 갑니다. */
+const SESSION_DB = 'onemath2-session';
+const SESSION_HOURS = 12; // 이보다 오래된 작업은 이어 가지 않습니다.
+let restoring = true; // 저장해 둔 작업을 되살리는 동안은 저장하지 않습니다.
+let saveTimer;
+
+function sessionStore(mode, fn) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open(SESSION_DB, 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('kv');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const db = open.result;
+      const tx = db.transaction('kv', mode);
+      const req = fn(tx.objectStore('kv'));
+      tx.oncomplete = () => { db.close(); resolve(req.result); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+  });
+}
+
+function saveSession() {
+  if (restoring) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const data = { savedAt: Date.now(), info: studentInfo(), scans, keys, examScore, practice, pending };
+    sessionStore('readwrite', (s) => s.put(data, 'session')).catch(() => {});
+  }, 300);
+}
+['studentName', 'teacherName', 'reportPeriod', 'actualGrade'].forEach((id) => $(`#${id}`).addEventListener('change', saveSession));
 
 /* ---------- 학생 시험지 · 답안지(정답) 사진 ---------- */
 const scans = []; // 학생 시험지 { id, name, dataUrl }
@@ -215,12 +249,13 @@ function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
     zone.classList.remove('dragover');
     if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files, false);
   });
+  return render;
 }
 
 const dropzone = $('#dropzone');
 const keyDropzone = $('#keyDropzone');
-setupImageZone(dropzone, $('#scanCamera'), $('#scanInput'), $('#thumbs'), scans, '시험지');
-setupImageZone(keyDropzone, $('#keyCamera'), $('#keyInput'), $('#keyThumbs'), keys, '답안지');
+const renderScans = setupImageZone(dropzone, $('#scanCamera'), $('#scanInput'), $('#thumbs'), scans, '시험지');
+const renderKeys = setupImageZone(keyDropzone, $('#keyCamera'), $('#keyInput'), $('#keyThumbs'), keys, '답안지');
 ['dragover', 'drop'].forEach((t) => window.addEventListener(t, (e) => {
   if (!dropzone.contains(e.target) && !keyDropzone.contains(e.target)) e.preventDefault();
 }));
@@ -260,84 +295,181 @@ function downloadBlob(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
+/* 웹 앱은 다른 앱의 전송 버튼을 대신 누르거나 그 화면을 읽을 수 없어서(폰 보안), 이렇게 이어 줍니다.
+   1) 'AI로 점수계산' 한 번에 사진·지시문을 공유 창으로 넘기고, 지시문도 복사해 둡니다.
+   2) AI 앱에서 답의 [복사]를 누르고 돌아오면 클립보드를 자동으로 읽어 바로 반영합니다.
+      또는 AI 답 글을 선택해 [공유] → onemath2 를 고르면 이 앱이 열리면서 바로 반영합니다. (manifest 의 share_target)
+   답을 기다리는 동안의 사진·결과는 폰에 저장해 두어서, 앱이 새로 열려도 이어집니다. (아래 '작업 저장') */
+let pending = null; // AI 앱의 답을 기다리는 중: { kind: 'grade'|'practice', tool, text }
+let lastClip = ''; // 이미 읽어 본 클립보드 글 (같은 글을 두 번 반영하지 않게)
+
+const handoffBox = (kind) => $(kind === 'practice' ? '#practiceHandoff' : '#gradeHandoff');
+
 function clearHandoffs() {
   $('#gradeHandoff').innerHTML = '';
   $('#practiceHandoff').innerHTML = '';
+  pending = null;
+  saveSession();
 }
 
-// 고른 AI 앱으로 사진·지시문을 공유하고, 앱에서 복사해 온 답을 붙여 넣어 받는 안내 칸을 그립니다.
-// files: 보낼 사진 File 목록, text: 지시문, onAnswer(json): 붙여 넣은 답 처리 (실패하면 오류를 던짐)
-function showHandoff(box, { files, text, what, onAnswer }) {
+// 사진·지시문을 공유 창으로 넘깁니다. 결과: 'shared' | 'aborted' | 'failed' | 'unsupported'
+async function shareToApp(files, text) {
+  lastClip = text;
+  copyText(text); // 공유와 같은 누름 안에서 복사해야 폰이 막지 않습니다.
+  const data = files.length ? { files, text, title: 'onemath' } : { text, title: 'onemath' };
+  if (!navigator.share || (navigator.canShare && !navigator.canShare(data))) return 'unsupported';
+  try {
+    await navigator.share(data);
+    return 'shared';
+  } catch (err) {
+    return err.name === 'AbortError' ? 'aborted' : 'failed';
+  }
+}
+
+function handoffMsg(kind, t, isError = false) {
+  const el = $('.handoff-msg', handoffBox(kind));
+  if (!el) return toast(t);
+  el.textContent = t;
+  el.classList.toggle('error', isError);
+}
+
+// AI 앱 안내 칸을 그리고, 바로 공유 창을 띄웁니다. (autoSend: 'AI로 점수계산'을 누른 그 자리에서 부를 때)
+// files: 보낼 사진 File 목록, text: 지시문, what: 제목에 쓸 말
+async function showHandoff(kind, { files, text, what, autoSend = true }) {
   const tool = currentTool();
+  const box = handoffBox(kind);
   box.innerHTML = `
     <div class="handoff">
       <p class="handoff-title">${tool.icon} ${esc(tool.label)} 앱으로 ${esc(what)}</p>
       <ol class="handoff-steps">
         <li>
-          <b>보내기</b>를 누르고 공유 목록에서 <b>${esc(tool.label)}</b>를 고른 뒤, 앱에서 전송하세요.
-          <span class="sub">지시문은 복사도 해 두니, 앱에 글이 안 들어갔으면 입력칸을 길게 눌러 붙여 넣으세요.</span>
+          공유 창에서 <b>${esc(tool.label)}</b>를 고르고, 앱에서 <b>전송</b>을 누르세요.
+          <span class="sub">지시문은 복사도 해 두었어요. 앱 입력칸에 글이 없으면 길게 눌러 붙여 넣으세요.</span>
           <div class="handoff-btns">
-            <button type="button" class="btn-send">📤 ${esc(tool.label)}로 보내기</button>
+            <button type="button" class="btn-send">📤 ${autoSend ? '다시 ' : ''}보내기</button>
             <button type="button" class="btn-outline btn-copy">📋 지시문 복사</button>
             ${files.length ? '<button type="button" class="btn-outline btn-save-imgs">💾 사진 저장</button>' : ''}
             <a class="btn-outline" href="${tool.appUrl}" target="_blank" rel="noopener">↗ 앱 열기</a>
           </div>
         </li>
-        <li>답이 다 나오면 코드 칸의 <b>복사</b> 버튼(또는 답을 길게 눌러 복사)을 누르고 이 앱으로 돌아오세요.</li>
         <li>
-          <button type="button" class="btn-outline btn-paste">📋 붙여넣기</button> 를 누르거나 아래 칸에 붙여 넣고 <b>결과 반영</b>을 누르세요.
-          <textarea class="handoff-answer" rows="4" placeholder="여기에 AI 답을 붙여 넣으세요"></textarea>
-          <button type="button" class="btn-grade btn-apply">✅ 결과 반영</button>
+          답이 다 나오면 답 아래의 <b>복사</b> 버튼을 누르고 이 앱으로 돌아오세요.
+          <span class="sub">돌아오면 자동으로 읽어서 반영해요. 답 글을 길게 눌러 선택한 뒤 <b>공유 → onemath2</b> 를 골라도 돼요.</span>
+        </li>
+        <li class="auto-wait">
+          <p class="wait-line"><span class="spin">⏳</span> <b>AI 답을 기다리는 중…</b></p>
+          <button type="button" class="btn-grade btn-paste">📋 AI 답 붙여넣기</button>
+          <details class="more">
+            <summary>자동으로 안 들어오면: 직접 붙여넣기</summary>
+            <textarea class="handoff-answer" rows="4" placeholder="여기에 AI 답을 길게 눌러 붙여 넣으세요"></textarea>
+            <button type="button" class="btn-outline wide btn-apply">✅ 결과 반영</button>
+          </details>
         </li>
       </ol>
       <p class="hint handoff-msg" aria-live="polite"></p>
     </div>`;
-  const msg = (t, isError = false) => {
-    const el = $('.handoff-msg', box);
-    el.textContent = t;
-    el.classList.toggle('error', isError);
-  };
+  const msg = (t, isError) => handoffMsg(kind, t, isError);
   const saveImages = () => files.forEach((f, i) => setTimeout(() => downloadBlob(f, f.name), i * 400));
-
-  $('.btn-send', box).addEventListener('click', async () => {
-    copyText(text); // 공유와 같은 누름 안에서 복사해야 폰이 막지 않습니다.
-    const data = files.length ? { files, text, title: 'onemath' } : { text, title: 'onemath' };
-    if (navigator.share && (!navigator.canShare || navigator.canShare(data))) {
-      try {
-        await navigator.share(data);
-        msg(`${tool.label}에서 답이 나오면 복사해서 돌아와 주세요.`);
-      } catch (err) {
-        if (err.name !== 'AbortError') msg(`보내지 못했어요. (${err.message}) 아래 '사진 저장'과 '지시문 복사' 후 앱에 직접 넣어 주세요.`, true);
-      }
-      return;
+  const send = async () => {
+    const result = await shareToApp(files, text);
+    if (result === 'shared') msg(`${tool.label}에서 전송하고, 답이 나오면 복사해서 돌아와 주세요. 자동으로 반영해요.`);
+    else if (result === 'aborted') msg('보내기를 닫았어요. 📤 보내기를 다시 눌러 주세요.');
+    else if (result === 'failed') msg(`바로 보내지 못했어요. 📤 보내기를 다시 누르거나, '사진 저장'과 '지시문 복사' 후 앱에 직접 넣어 주세요.`, true);
+    else {
+      // 공유 기능이 없는 브라우저(PC 등): 사진을 저장하고 지시문을 복사한 뒤 앱을 엽니다.
+      if (files.length) saveImages();
+      msg(`이 브라우저는 앱으로 바로 보내기를 못 해요. ${files.length ? '사진을 저장하고 ' : ''}지시문을 복사했어요. ${tool.label}에 ${files.length ? '사진을 올리고 ' : ''}지시문을 붙여 넣어 주세요.`);
+      window.open(tool.appUrl, '_blank', 'noopener');
     }
-    // 공유 기능이 없는 브라우저(PC 등): 사진을 저장하고 지시문을 복사한 뒤 앱을 엽니다.
-    if (files.length) saveImages();
-    msg(`이 브라우저는 앱으로 바로 보내기를 못 해요. ${files.length ? '사진을 저장하고 ' : ''}지시문을 복사했어요. ${tool.label}에 ${files.length ? '사진을 올리고 ' : ''}지시문을 붙여 넣어 주세요.`);
-    window.open(tool.appUrl, '_blank', 'noopener');
-  });
+  };
+
+  $('.btn-send', box).addEventListener('click', send);
   $('.btn-copy', box).addEventListener('click', async () => {
-    msg((await copyText(text)) ? '지시문을 복사했어요. AI 앱 입력칸을 길게 눌러 붙여 넣으세요.' : '복사하지 못했어요.', false);
+    lastClip = text;
+    msg((await copyText(text)) ? '지시문을 복사했어요. AI 앱 입력칸을 길게 눌러 붙여 넣으세요.' : '복사하지 못했어요.');
   });
   $('.btn-save-imgs', box)?.addEventListener('click', () => { saveImages(); msg('사진을 저장했어요. AI 앱에서 사진을 올려 주세요.'); });
   $('.btn-paste', box).addEventListener('click', async () => {
     try {
-      $('.handoff-answer', box).value = await navigator.clipboard.readText();
-      $('.btn-apply', box).click();
+      const t = await navigator.clipboard.readText();
+      lastClip = t;
+      receiveAnswer(t);
     } catch {
       msg('붙여넣기 권한이 없어요. 아래 칸을 길게 눌러 붙여 넣어 주세요.', true);
+      $('details.more', box).open = true;
       $('.handoff-answer', box).focus();
     }
   });
-  $('.btn-apply', box).addEventListener('click', () => {
-    try {
-      onAnswer(parseAiJson($('.handoff-answer', box).value));
-      box.innerHTML = '';
-    } catch (err) {
-      msg(err.message, true);
-    }
-  });
+  $('.btn-apply', box).addEventListener('click', () => receiveAnswer($('.handoff-answer', box).value));
+  if (autoSend) await send();
 }
+
+// AI 답 글을 받아 채점 결과나 보충 문제로 반영합니다. 반영하면 true.
+// quiet: 클립보드를 자동으로 읽은 경우라, AI 답(JSON)처럼 보이지 않으면 아무 말 없이 넘깁니다.
+function receiveAnswer(text, { quiet = false } = {}) {
+  const t = String(text || '');
+  const kindHint = pending?.kind || 'grade';
+  const looksAnswer = /"(questions|sets)"\s*:/.test(t);
+  const fail = (m) => { if (!quiet || looksAnswer) handoffMsg(kindHint, m, true); return false; };
+  if (!t.trim()) return fail('붙여 넣을 글이 없어요. AI 답의 복사 버튼을 먼저 눌러 주세요.');
+  if (t.includes(PROMPT_MARK)) return fail('지금 클립보드에는 보낸 지시문이 들어 있어요. AI 답 아래의 복사 버튼을 눌러 주세요.');
+  if (/^\s*https?:\/\/\S+\s*$/.test(t)) return fail('대화 링크가 들어왔어요. 링크 말고 AI 답 글을 복사(또는 선택해서 공유)해 주세요.');
+  let json;
+  try { json = parseAiJson(t); } catch (err) { return fail(err.message); }
+  const kind = Array.isArray(json.questions) ? 'grade' : Array.isArray(json.sets) ? 'practice' : null;
+  if (!kind) return fail('채점 결과나 보충 문제 모양의 답이 아니에요. AI 답 전체를 다시 복사해 주세요.');
+  const engine = `${(AI_TOOLS[pending?.tool] || currentTool()).label} 앱`;
+  try {
+    if (kind === 'grade') {
+      if (!scans.length) throw new Error('시험지 사진이 없어서 채점 결과를 붙일 수 없어요. 사진을 넣고 다시 보내 주세요.');
+      finishGrade(json, engine);
+    } else {
+      if (!examScore) throw new Error('보충 문제는 채점이 끝난 뒤에 받을 수 있어요.');
+      finishPractice(json, engine);
+    }
+  } catch (err) {
+    return fail(err.message);
+  }
+  handoffBox(kind).innerHTML = '';
+  pending = null;
+  saveSession();
+  toast(kind === 'grade' ? `✅ AI 답을 자동으로 받아 채점했어요. 총점 ${fmt(examScore.total)}/${fmt(examScore.maxScore)}점` : '✅ AI가 만든 보충 문제를 받았어요.');
+  return true;
+}
+
+// AI 앱에서 돌아오면 클립보드를 읽어, AI 답이 있으면 바로 반영합니다.
+// (안드로이드 크롬은 처음 한 번 '클립보드 보기' 권한을 물어요. 아이폰은 막혀 있어서 '📋 AI 답 붙여넣기'를 눌러야 해요)
+let clipReading = false; // focus 와 visibilitychange 가 함께 와도 한 번만 읽습니다.
+async function readClipboardAuto() {
+  if (clipReading || !pending || document.visibilityState !== 'visible' || !navigator.clipboard?.readText) return;
+  clipReading = true;
+  try {
+    try {
+      const perm = await navigator.permissions?.query({ name: 'clipboard-read' });
+      if (perm?.state === 'denied') return nudgePaste();
+    } catch {} // 'clipboard-read' 권한 이름을 모르는 브라우저
+    let text;
+    try { text = await navigator.clipboard.readText(); } catch { return nudgePaste(); }
+    if (!text || text === lastClip) return;
+    lastClip = text;
+    if (!receiveAnswer(text, { quiet: true })) nudgePaste();
+  } finally {
+    clipReading = false;
+  }
+}
+
+// 자동으로 못 읽었을 때 '📋 AI 답 붙여넣기' 버튼을 눈에 띄게 합니다.
+function nudgePaste() {
+  const btn = pending && $('.btn-paste', handoffBox(pending.kind));
+  if (!btn) return;
+  btn.classList.add('pulse');
+  btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+window.addEventListener('focus', () => setTimeout(readClipboardAuto, 300));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setTimeout(readClipboardAuto, 600);
+});
 
 /* ---------- 시험지 채점 ---------- */
 let examScore = null; // scoreSummary 결과 + { engine, usedAnswerKey }
@@ -350,8 +482,28 @@ function resetGrade() {
   $('#btnGrade').disabled = false;
   $('#btnGrade').textContent = '🤖 AI로 점수계산';
   $('#gradeHandoff').innerHTML = '';
+  pending = null;
+  prepareGradeFiles();
   renderGrade();
+  saveSession();
 }
+
+// AI 앱으로 보낼 사진(띠 붙인 사진)을 미리 만들어 둡니다.
+// 'AI로 점수계산'을 누른 뒤 사진을 만드느라 시간이 지나면 폰이 공유 창을 막아서, 누르는 즉시 공유 창이 뜨게 하려는 것입니다.
+let gradeFilesReady = null;
+let prepareTimer;
+function prepareGradeFiles() {
+  gradeFilesReady = null;
+  clearTimeout(prepareTimer);
+  if (scans.length && !useApi()) prepareTimer = setTimeout(gradeFiles, 400);
+}
+function gradeFiles() {
+  gradeFilesReady ||= labeledImages().then((images) => images.map((img, i) => dataUrlToFile(img.dataUrl,
+    `${i < scans.length ? '시험지' : '답안지'}_${i < scans.length ? i + 1 : i - scans.length + 1}.jpg`)));
+  return gradeFilesReady;
+}
+const gradeHandoffText = () => handoffPrompt(GRADE_PROMPT, gradeRequest(), GRADE_EXAMPLE,
+  '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …] 처럼 어떤 사진인지 적혀 있습니다.');
 
 // 학년을 골랐으면 그 학년 단원 이름으로, 아니면 초1~중3 전체 단원 이름으로 문제 유형을 나누게 합니다.
 function gradeRequest() {
@@ -376,6 +528,7 @@ async function labeledImages() {
 function finishGrade(result, engine) {
   examScore = { ...scoreSummary(result), engine, usedAnswerKey: keys.length > 0 };
   renderGrade();
+  saveSession();
   $('#step2-1').scrollIntoView({ behavior: 'smooth' });
   toast(`채점을 마쳤습니다. 총점 ${fmt(examScore.total)}/${fmt(examScore.maxScore)}점`);
 }
@@ -386,30 +539,28 @@ async function gradeScans() {
     dropzone.scrollIntoView({ behavior: 'smooth' });
     return;
   }
-  const run = ++gradeRun;
   const btn = $('#btnGrade');
   const tool = currentTool();
+  if (!useApi()) {
+    // 앱으로 보내기: 누르는 즉시 공유 창을 띄우고, 돌아오면 답을 자동으로 받습니다.
+    examScore = null;
+    renderGrade('waiting');
+    const files = await gradeFiles();
+    const text = gradeHandoffText();
+    pending = { kind: 'grade', tool: aiSettings.tool, text };
+    saveSession();
+    const sending = showHandoff('grade', { files, text, what: '채점 보내기' });
+    $('#gradeHandoff').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await sending;
+    return;
+  }
+  const run = ++gradeRun;
   btn.disabled = true;
-  btn.textContent = useApi() ? '🤖 채점하는 중…' : '🤖 보낼 사진 준비 중…';
+  btn.textContent = '🤖 채점하는 중…';
   try {
     const images = await labeledImages();
     const request = gradeRequest();
     if (run !== gradeRun) return;
-    if (!useApi()) {
-      renderGrade('waiting');
-      showHandoff($('#gradeHandoff'), {
-        files: images.map((img, i) => dataUrlToFile(img.dataUrl, `${i < scans.length ? '시험지' : '답안지'}_${i < scans.length ? i + 1 : i - scans.length + 1}.jpg`)),
-        text: handoffPrompt(GRADE_PROMPT, request, GRADE_EXAMPLE,
-          '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …] 처럼 어떤 사진인지 적혀 있습니다.'),
-        what: '채점 보내기',
-        onAnswer: (json) => {
-          if (run !== gradeRun) throw new Error('시험지 사진이 바뀌었어요. AI로 점수계산을 다시 눌러 주세요.');
-          finishGrade(json, `${tool.label} 앱`);
-        },
-      });
-      $('#gradeHandoff').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
     $('#step2-1').scrollIntoView({ behavior: 'smooth' });
     renderGrade('loading');
     const result = await askAI({
@@ -439,7 +590,7 @@ function renderGrade(state, msg = '') {
     return;
   }
   if (state === 'waiting') {
-    box.innerHTML = `<p class="grade-empty">📲 ${esc(currentTool().label)} 앱의 답을 기다리고 있어요. 2단계 아래 안내를 따라 주세요.</p>`;
+    box.innerHTML = `<p class="grade-empty">📲 ${esc(currentTool().label)} 앱의 답을 기다리고 있어요. 답을 복사해서 돌아오면 자동으로 채점돼요.</p>`;
     return;
   }
   if (state === 'error') {
@@ -567,6 +718,7 @@ function renderPracticePick() {
   practice = null;
   $('#practiceResult').innerHTML = '';
   $('#practiceHandoff').innerHTML = '';
+  if (pending?.kind === 'practice') pending = null;
   $('#btnPractice').disabled = false;
   $('#btnPractice').textContent = PRACTICE_BTN;
   const box = $('#practicePick');
@@ -595,6 +747,7 @@ function finishPractice(result, engine) {
   practice = { ...cleanPractice(result), engine };
   renderPractice();
   renderPdfState();
+  saveSession();
   toast(`보충 문제 ${practice.sets.reduce((a, s) => a + s.problems.length, 0)}개를 만들었어요.`);
 }
 
@@ -616,16 +769,12 @@ async function makePractice() {
   practice = null;
   $('#practiceResult').innerHTML = '';
   if (!useApi()) {
-    showHandoff($('#practiceHandoff'), {
-      files: [],
-      text: handoffPrompt(PRACTICE_PROMPT, `아래 정보로 보충 문제를 만들어 주세요.\n\n${request}`, PRACTICE_EXAMPLE),
-      what: '보충 문제 요청하기',
-      onAnswer: (json) => {
-        if (run !== practiceRun) throw new Error('채점 결과가 바뀌었어요. 보충 문제 만들기를 다시 눌러 주세요.');
-        finishPractice(json, `${tool.label} 앱`);
-      },
-    });
+    const text = handoffPrompt(PRACTICE_PROMPT, `아래 정보로 보충 문제를 만들어 주세요.\n\n${request}`, PRACTICE_EXAMPLE);
+    pending = { kind: 'practice', tool: aiSettings.tool, text };
+    saveSession();
+    const sending = showHandoff('practice', { files: [], text, what: '보충 문제 요청하기' });
     $('#practiceHandoff').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await sending;
     return;
   }
   const btn = $('#btnPractice');
@@ -757,3 +906,69 @@ $('#btnPdfSave').addEventListener('click', () => {
 });
 
 renderPdfState();
+
+/* ---------- 새 학생 시작 ---------- */
+$('#btnNewStudent').addEventListener('click', () => {
+  ['studentName', 'reportPeriod'].forEach((id) => { $(`#${id}`).value = ''; });
+  scans.length = 0;
+  keys.length = 0;
+  renderScans();
+  renderKeys(); // 채점 결과·보충 문제·기다리던 요청도 함께 지워집니다.
+  setScanMsg('');
+  $('#step1').scrollIntoView({ behavior: 'smooth' });
+  toast('새 학생을 시작해요. 학생 이름부터 넣어 주세요.');
+});
+
+/* ---------- 저장해 둔 작업 이어 가기 · AI 답 공유받기 ---------- */
+// AI 앱에서 답 글을 선택해 [공유] → onemath2 를 고르면 ./?st=제목&sx=글&su=링크 로 이 앱이 열립니다. (manifest 의 share_target)
+function takeSharedText() {
+  const p = new URLSearchParams(location.search);
+  if (!['st', 'sx', 'su'].some((k) => p.has(k))) return '';
+  history.replaceState(null, '', location.pathname);
+  return ['sx', 'st', 'su'].map((k) => p.get(k) || '').filter(Boolean).join('\n');
+}
+
+async function restoreSession() {
+  let s = null;
+  try { s = await sessionStore('readonly', (st) => st.get('session')); } catch {}
+  if (s && Date.now() - s.savedAt < SESSION_HOURS * 3600 * 1000) {
+    const info = s.info || {};
+    [['studentName', info.student], ['teacherName', info.teacher], ['reportPeriod', info.period], ['actualGrade', info.grade]]
+      .forEach(([id, v]) => { if (v) $(`#${id}`).value = v; });
+    scans.push(...(s.scans || []));
+    keys.push(...(s.keys || []));
+    renderScans();
+    renderKeys();
+    setScanMsg(attachedMsg());
+    if (s.examScore && scans.length) {
+      examScore = s.examScore;
+      renderGrade();
+      if (s.practice) {
+        practice = s.practice;
+        renderPractice();
+        renderPdfState();
+      }
+    }
+    if (s.pending) {
+      pending = s.pending;
+      if (pending.kind === 'grade' && scans.length) {
+        renderGrade('waiting');
+        showHandoff('grade', { files: await gradeFiles(), text: pending.text, what: '채점 보내기', autoSend: false });
+      } else if (pending.kind === 'practice' && examScore) {
+        showHandoff('practice', { files: [], text: pending.text, what: '보충 문제 요청하기', autoSend: false });
+      } else {
+        pending = null;
+      }
+    }
+  }
+  restoring = false;
+}
+
+const sharedText = takeSharedText();
+restoreSession().then(() => {
+  if (sharedText) {
+    if (!receiveAnswer(sharedText)) $(`#${pending?.kind === 'practice' ? 'step2-3' : 'step2'}`).scrollIntoView({ behavior: 'smooth' });
+  } else {
+    readClipboardAuto(); // 이 앱이 새로 열린 경우에도 복사해 온 AI 답을 읽어 봅니다.
+  }
+});

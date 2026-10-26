@@ -1,7 +1,7 @@
 {
-  "name": "onemath AI 수학 채점",
-  "short_name": "onemath",
-  "description": "시험지를 찍으면 AI가 채점하고 유형별 점수와 보충 문제를 만들어 PDF 문서로 보내 줍니다.",
+  "name": "onemath2 AI 수학 채점",
+  "short_name": "onemath2",
+  "description": "시험지를 찍으면 폰의 AI 앱으로 자동으로 보내 채점하고, 유형별 점수와 보충 문제를 만들어 PDF 문서로 보내 줍니다.",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
@@ -9,6 +9,11 @@
   "orientation": "portrait",
   "background_color": "#f4f4f8",
   "theme_color": "#16161d",
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": { "title": "st", "text": "sx", "url": "su" }
+  },
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },

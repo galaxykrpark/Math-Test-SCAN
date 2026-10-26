@@ -1,4 +1,4 @@
-/* AI 연결
+/* AI 연결 (onemath2: 앱으로 보내기는 누르는 즉시 공유 창, 돌아오면 클립보드의 답을 자동으로 읽음)
    - 앱으로 보내기: 사진과 지시문을 폰의 ChatGPT·제미나이·Claude 앱으로 공유하고, AI 답(JSON)을 복사해 와서 붙여 넣습니다.
    - API 키: 이 폰에 저장한 키로 앱 안에서 바로 AI를 불러 자동으로 채점합니다.
    지시문(GRADE_PROMPT, PRACTICE_PROMPT)과 점수 계산은 PC용 server.py 와 같습니다. */
@@ -179,9 +179,12 @@ function practiceText({ grade, count, types }) {
   return lines.join('\n');
 }
 
+// 지시문 맨 앞에 붙이는 표시. 클립보드를 자동으로 읽을 때 우리가 복사한 지시문(견본 JSON 포함)을 AI 답으로 착각하지 않게 합니다.
+const PROMPT_MARK = '[onemath 채점 지시문]';
+
 // AI 앱에 붙여 보낼 한 덩어리 글 (지시문 + 요청 + 답 모양)
 function handoffPrompt(system, request, example, extra = '') {
-  return `${system}\n\n---\n${request}${extra ? `\n${extra}` : ''}\n\n`
+  return `${PROMPT_MARK}\n${system}\n\n---\n${request}${extra ? `\n${extra}` : ''}\n\n`
     + '답은 설명 없이 아래 모양의 JSON 하나만 ```json 코드 블록 하나에 담아 주세요. 글자 그대로의 키 이름을 쓰고, 문항이 많아도 끝까지 빠짐없이 씁니다.\n'
     + example;
 }
