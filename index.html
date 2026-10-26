@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16161d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="onemath">
+  <title>onemath 수학 채점</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- ?v= 를 붙여 브라우저가 예전에 저장해 둔 파일 대신 새 파일을 받게 합니다 -->
+  <link rel="stylesheet" href="style.css?v=20261026m">
+  <link rel="stylesheet" href="mobile.css?v=20261026m">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span class="brand"><span class="brand-dot"></span>onemath</span>
+      <button type="button" class="menu-pill" id="aiPill" aria-label="AI 선택으로 이동">AI 수학 채점</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <div class="workspace">
+      <!-- 환영 배너 -->
+      <section class="hero">
+        <div class="hero-text">
+          <p class="hero-hi">선생님, 오늘도 수고 많으세요 👋</p>
+          <h1><span class="hl">시험지</span>를 찍으면 채점하고 점수와 보충문제까지 드려요</h1>
+          <p class="hero-sub">카메라로 시험지와 답안지를 찍고, 폰에 있는 AI로 채점한 뒤 Word 문서로 보내요.</p>
+        </div>
+        <nav class="steps-nav" aria-label="작성 단계">
+          <a href="#step0" class="chip">AI 선택</a>
+          <a href="#step1" class="chip">1 학생</a>
+          <a href="#step2" class="chip">2 사진</a>
+          <a href="#step2-1" class="chip">점수</a>
+          <a href="#step2-3" class="chip">보충</a>
+          <a href="#step3" class="chip">docx</a>
+        </nav>
+      </section>
+
+      <!-- 0. AI 선택 -->
+      <section class="card step" id="step0">
+        <h2 class="block-title"><span class="step-badge">AI</span><span class="ico">🤖</span> 채점할 AI 고르기</h2>
+        <div class="tool-pick" role="radiogroup" aria-label="AI 도구" id="toolPick"></div>
+        <div class="mode-pick" role="radiogroup" aria-label="연결 방식">
+          <label class="mode"><input type="radio" name="aiMode" value="app">
+            <span><b>📲 내 폰의 AI 앱으로 보내기</b><small>사진·지시문을 앱으로 공유하고, 답을 복사해 붙여 넣어요. 키 필요 없음</small></span></label>
+          <label class="mode"><input type="radio" name="aiMode" value="api">
+            <span><b>🔑 API 키로 자동 채점</b><small>키를 한 번 넣으면 이 앱 안에서 버튼 한 번에 끝나요</small></span></label>
+        </div>
+        <div class="key-box hidden" id="keyBox">
+          <label for="apiKey"><span id="keyLabel">API 키</span> <span class="label-note" id="keyNote"></span></label>
+          <div class="key-row">
+            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="여기에 키를 붙여 넣으세요">
+            <button type="button" class="btn-outline" id="btnKeyShow">보기</button>
+          </div>
+          <p class="hint"><a id="keyLink" href="#" target="_blank" rel="noopener">🔗 키 받는 곳</a> · 키는 이 폰에만 저장되고, 고른 AI 회사로만 보내져요.</p>
+          <details class="more">
+            <summary>모델 바꾸기 (보통은 그대로 두세요)</summary>
+            <input id="apiModel" spellcheck="false" autocomplete="off">
+          </details>
+        </div>
+      </section>
+
+      <!-- 1. 학생 및 리포트 정보 -->
+      <section class="card step c1" id="step1">
+        <h2 class="block-title"><span class="step-badge">1</span><span class="ico">🧒</span> 학생 정보</h2>
+        <div class="grid-2">
+          <div class="span-2">
+            <label for="academyName">학원명 <span class="label-note">(한 번 입력하면 기억해요)</span></label>
+            <input id="academyName" maxlength="30" placeholder="예: 미래엔영어수학학원">
+          </div>
+          <div>
+            <label for="studentName">학생 이름</label>
+            <input id="studentName" maxlength="30" placeholder="예: 홍길동">
+          </div>
+          <div>
+            <label for="teacherName">선생님 이름</label>
+            <input id="teacherName" maxlength="30" placeholder="미입력시 담임 선생님으로 표시">
+          </div>
+          <div>
+            <label for="reportPeriod">학습지 기간</label>
+            <input id="reportPeriod" maxlength="20" placeholder="예: 10월 4주차">
+          </div>
+          <div>
+            <label for="actualGrade">현재 학년</label>
+            <select id="actualGrade">
+              <option value="">학년 선택 (초1 ~ 중3)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 시험지 · 답안지 사진 -->
+      <section class="card step c2" id="step2">
+        <h2 class="block-title"><span class="step-badge">2</span><span class="ico">📸</span> 시험지 · 답안지 사진</h2>
+        <div class="drop-pair">
+          <div class="drop-col">
+            <p class="drop-label"><span class="drop-tag">필수</span> 📝 학생 시험지</p>
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="scanCamera" accept="image/*" capture="environment" hidden>
+              <input type="file" id="scanInput" accept="image/*" multiple hidden>
+              <div class="cam-btns">
+                <button type="button" class="btn-cam" data-open="scanCamera">📷 사진 찍기</button>
+                <button type="button" class="btn-album" data-open="scanInput">🖼️ 앨범</button>
+              </div>
+              <p class="dz-sub cam-sub">학생이 푼 시험지를 한 장씩 찍어 주세요 · 최대 10장</p>
+              <ul class="thumbs" id="thumbs"></ul>
+            </div>
+          </div>
+          <div class="drop-col">
+            <p class="drop-label"><span class="drop-tag opt">선택</span> ✅ 답안지 (정답)</p>
+            <div class="dropzone key" id="keyDropzone">
+              <input type="file" id="keyCamera" accept="image/*" capture="environment" hidden>
+              <input type="file" id="keyInput" accept="image/*" multiple hidden>
+              <div class="cam-btns">
+                <button type="button" class="btn-cam" data-open="keyCamera">📷 사진 찍기</button>
+                <button type="button" class="btn-album" data-open="keyInput">🖼️ 앨범</button>
+              </div>
+              <p class="dz-sub cam-sub">정답지를 찍으면 그 정답으로 채점해요 · 없으면 AI가 직접 풀어요</p>
+              <ul class="thumbs" id="keyThumbs"></ul>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-grade" id="btnGrade">🤖 AI로 점수계산</button>
+        <p class="hint" id="scanMsg" aria-live="polite"></p>
+        <div class="handoff-box" id="gradeHandoff"></div>
+      </section>
+
+      <!-- 2-1. 시험지 스캔 점수 -->
+      <section class="card step c2" id="step2-1">
+        <h2 class="block-title"><span class="step-badge wide">2-1</span><span class="ico">💯</span> 채점 점수</h2>
+        <div class="grade-box" id="gradeBox" aria-live="polite">
+          <p class="grade-empty">시험지 사진을 찍고 'AI로 점수계산'을 누르면 채점 결과가 여기에 나타나요.</p>
+        </div>
+      </section>
+
+      <!-- 2-2. 채점 상세 설명 -->
+      <section class="card step c2" id="step2-2">
+        <h2 class="block-title"><span class="step-badge wide">2-2</span><span class="ico">📋</span> 상세 설명</h2>
+        <div class="detail-box" id="gradeDetail" aria-live="polite">
+          <p class="grade-empty">채점이 끝나면 자세한 설명이 여기에 나타나요.</p>
+        </div>
+      </section>
+
+      <!-- 2-3. 보충 문제 -->
+      <section class="card step c2" id="step2-3">
+        <h2 class="block-title"><span class="step-badge wide">2-3</span><span class="ico">🧩</span> 보충 문제</h2>
+        <p class="desc">점수가 낮은 유형(70% 미만)을 골라 두었어요. 문제 수를 고르고 '보충 문제 만들기'를 누르세요.</p>
+        <div class="practice-pick" id="practicePick">
+          <p class="grade-empty">채점이 끝나면 보충할 유형이 여기에 나타나요.</p>
+        </div>
+        <div class="practice-controls hidden" id="practiceControls">
+          <label class="practice-count">유형마다
+            <select id="practiceCount">
+              <option value="3">3문제</option>
+              <option value="5" selected>5문제</option>
+              <option value="10">10문제</option>
+            </select>
+          </label>
+          <button type="button" class="btn-practice" id="btnPractice">🧩 보충 문제 만들기</button>
+        </div>
+        <div class="handoff-box" id="practiceHandoff"></div>
+        <div class="practice-result" id="practiceResult" aria-live="polite"></div>
+      </section>
+
+      <!-- 3. Word 문서로 제출 -->
+      <section class="card step" id="step3">
+        <h2 class="block-title"><span class="step-badge">3</span><span class="ico">📄</span> 채점 결과 제출 (Word)</h2>
+        <p class="desc">채점 점수, 유형별 점수, 상세 설명과 (만들었다면) 보충 문제를 docx 파일 하나로 만들어요.</p>
+        <div class="docx-btns">
+          <button type="button" class="btn-grade" id="btnDocxShare" disabled>📤 docx 보내기 (카톡·메일·드라이브)</button>
+          <button type="button" class="btn-outline wide" id="btnDocxSave" disabled>💾 폰에 docx 저장</button>
+        </div>
+        <p class="hint" id="docxMsg">채점이 끝나면 누를 수 있어요.</p>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="curriculum.js?v=20261026m"></script>
+  <script src="ai.js?v=20261026m"></script>
+  <script src="docx.js?v=20261026m"></script>
+  <script src="app.js?v=20261026m"></script>
+</body>
+</html>

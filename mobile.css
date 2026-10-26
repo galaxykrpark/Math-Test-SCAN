@@ -1,0 +1,92 @@
+/* ===== 모바일 앱 전용 (style.css 위에 덧씌웁니다) ===== */
+body { -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
+.topbar { padding-top: env(safe-area-inset-top); }
+button.menu-pill { border: 0; cursor: pointer; }
+.hero { grid-template-columns: 1fr; }
+.btn-outline.wide { width: 100%; padding: 14px; font-size: 16px; margin-top: 10px; }
+.btn-outline { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-height: 44px; }
+
+/* ---------- AI 선택 ---------- */
+.tool-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tool {
+  margin: 0; cursor: pointer; text-align: center; border: 2px solid var(--line); border-radius: 18px;
+  padding: 14px 6px 10px; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: border-color .15s, background .15s;
+}
+.tool input { position: absolute; opacity: 0; pointer-events: none; }
+.tool .tool-ico { font-size: 26px; line-height: 1.2; }
+.tool b { font-size: 15px; color: var(--ink); }
+.tool small { font-size: 11px; color: var(--muted); font-weight: 500; }
+.tool.on { border-color: var(--violet); background: var(--violet-soft); }
+.tool:has(input:focus-visible) { box-shadow: 0 0 0 4px var(--violet-soft); }
+.mode-pick { display: grid; gap: 8px; margin-top: 14px; }
+.mode {
+  display: flex; gap: 10px; align-items: flex-start; margin: 0; cursor: pointer; font-weight: 500;
+  border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; background: var(--field);
+}
+.mode input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--violet); flex-shrink: 0; }
+.mode b { display: block; color: var(--ink); font-size: 15px; }
+.mode small { display: block; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.mode:has(input:checked) { border-color: var(--violet); background: #fff; }
+.key-box { margin-top: 14px; }
+.key-row { display: flex; gap: 8px; }
+.key-row input { flex: 1; min-width: 0; }
+.more { margin-top: 10px; }
+.more summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+
+/* ---------- 사진 칸 (카메라) ---------- */
+.dropzone { cursor: default; min-height: 0; padding: 16px; justify-content: flex-start; }
+.cam-btns { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.btn-cam, .btn-album {
+  min-height: 56px; border: 0; border-radius: 16px; cursor: pointer; font-size: 17px; font-weight: 800;
+  transition: transform .1s;
+}
+.btn-cam { background: var(--ink); color: var(--lime); }
+.btn-album { background: #fff; color: var(--ink); border: 1px solid var(--line); font-size: 15px; }
+.dropzone.key .btn-cam { background: var(--mint); color: #fff; }
+.btn-cam:active, .btn-album:active { transform: scale(.98); }
+.btn-cam:disabled, .btn-album:disabled { opacity: .45; }
+.cam-sub { text-align: center; margin: 10px 0 0; }
+.dropzone.has-files .cam-sub { display: none; }
+.dropzone .thumbs:not(:empty) { margin-top: 12px; }
+.thumbs { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.thumb img { height: 120px; }
+
+/* ---------- AI 앱으로 보내기 안내 ---------- */
+.handoff-box:not(:empty) { margin-top: 16px; }
+.handoff { border: 2px solid var(--violet); border-radius: 20px; padding: 16px; background: var(--violet-soft); }
+.handoff-title { margin: 0 0 8px; font-weight: 800; font-size: 17px; color: var(--ink); }
+.handoff-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 14px; font-size: 15px; }
+.handoff-steps li::marker { font-weight: 800; color: var(--violet); }
+.handoff-steps .sub { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.handoff-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn-send {
+  flex: 1 1 100%; min-height: 54px; border: 0; border-radius: 16px; cursor: pointer;
+  background: linear-gradient(120deg, var(--violet), #b06bff); color: #fff; font-size: 17px; font-weight: 800;
+  box-shadow: 0 8px 20px rgba(123, 97, 255, .3);
+}
+.handoff-btns .btn-outline { flex: 1; white-space: nowrap; }
+.handoff-answer { margin: 10px 0 0; min-height: 96px; font-size: 14px; font-family: ui-monospace, monospace; }
+.handoff .btn-grade { margin-top: 10px; font-size: 17px; }
+.handoff-msg:empty { display: none; }
+
+/* ---------- docx ---------- */
+.docx-btns .btn-grade { margin-top: 0; }
+.btn-grade:disabled, .btn-outline:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .layout { padding: 14px 12px 48px; }
+  .hero { padding: 20px 18px 16px; border-radius: 22px; gap: 10px; }
+  .hero h1 { font-size: 21px; margin: 4px 0 6px; }
+  .hero-sub { font-size: 14px; }
+  .chip { font-size: 13px; padding: 5px 11px; }
+  .block-title { font-size: 19px; margin-bottom: 14px; }
+  .score-ring { width: 112px; height: 112px; }
+  .score-ring b { font-size: 32px; }
+  .q-table { font-size: 13px; }
+  .q-table th, .q-table td { padding: 7px 6px; }
+  .pick-list { grid-template-columns: 1fr; }
+  .practice-controls .btn-practice { min-width: 0; width: 100%; }
+  .practice-bar .btn-outline { color: #fff; }
+  .toast { bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
