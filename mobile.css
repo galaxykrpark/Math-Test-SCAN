@@ -70,8 +70,8 @@ button.menu-pill { border: 0; cursor: pointer; }
 .handoff .btn-grade { margin-top: 10px; font-size: 17px; }
 .handoff-msg:empty { display: none; }
 
-/* ---------- docx ---------- */
-.docx-btns .btn-grade { margin-top: 0; }
+/* ---------- pdf ---------- */
+.pdf-btns .btn-grade { margin-top: 0; }
 .btn-grade:disabled, .btn-outline:disabled { opacity: .45; cursor: not-allowed; }
 
 @media (max-width: 640px) {

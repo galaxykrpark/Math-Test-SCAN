@@ -1,7 +1,7 @@
 {
   "name": "onemath AI 수학 채점",
   "short_name": "onemath",
-  "description": "시험지를 찍으면 AI가 채점하고 유형별 점수와 보충 문제를 만들어 Word 문서로 보내 줍니다.",
+  "description": "시험지를 찍으면 AI가 채점하고 유형별 점수와 보충 문제를 만들어 PDF 문서로 보내 줍니다.",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",

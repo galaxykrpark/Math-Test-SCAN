@@ -433,7 +433,7 @@ function renderGrade(state, msg = '') {
   const box = $('#gradeBox');
   renderGradeDetail(state);
   renderPracticePick();
-  renderDocxState();
+  renderPdfState();
   if (state === 'loading') {
     box.innerHTML = `<p class="grade-empty loading"><span class="spin">✏️</span> ${esc(`${currentTool().label}가 시험지 ${scans.length}장을 ${keys.length ? `답안지 ${keys.length}장과 비교하며 ` : ''}채점하고 있어요…`)} (1~2분 걸릴 수 있어요)</p>`;
     return;
@@ -594,7 +594,7 @@ function renderPracticePick() {
 function finishPractice(result, engine) {
   practice = { ...cleanPractice(result), engine };
   renderPractice();
-  renderDocxState();
+  renderPdfState();
   toast(`보충 문제 ${practice.sets.reduce((a, s) => a + s.problems.length, 0)}개를 만들었어요.`);
 }
 
@@ -670,7 +670,7 @@ function renderPractice() {
         </li>`).join('')}
       </ol>
     </div>`).join('')}
-    <p class="hint"><a href="#step3">📄 보충 문제도 3단계 Word 문서에 함께 들어가요</a></p>`;
+    <p class="hint"><a href="#step3">📄 보충 문제도 3단계 PDF 문서에 함께 들어가요</a></p>`;
 }
 
 // 학생에게 나눠 줄 문제지(앞)와 선생님용 정답·풀이(뒤 페이지)를 새 창으로 열어 인쇄합니다.
@@ -714,12 +714,12 @@ $('#practiceResult').addEventListener('click', (e) => {
   if (e.target.closest('#btnPracticePrint')) printPractice();
 });
 
-/* ---------- 3. Word(docx) 문서로 제출 ---------- */
-function renderDocxState() {
+/* ---------- 3. PDF 문서로 제출 ---------- */
+function renderPdfState() {
   const ready = !!examScore;
-  $('#btnDocxShare').disabled = !ready;
-  $('#btnDocxSave').disabled = !ready;
-  $('#docxMsg').textContent = ready
+  $('#btnPdfShare').disabled = !ready;
+  $('#btnPdfSave').disabled = !ready;
+  $('#pdfMsg').textContent = ready
     ? `채점 결과${practice ? '와 보충 문제' : ''}가 문서에 들어가요.${practice ? '' : ' 보충 문제도 넣으려면 2-3에서 먼저 만들어 주세요.'}`
     : '채점이 끝나면 누를 수 있어요.';
 }
@@ -727,11 +727,11 @@ function renderDocxState() {
 function reportFile() {
   const info = studentInfo();
   const safe = (t) => (t || '').replace(/[\\/:*?"<>|\s]+/g, '').slice(0, 30);
-  const name = `${[safe(info.student) || '학생', safe(info.period), '채점결과'].filter(Boolean).join('_')}.docx`;
-  return new File([buildReportDocx({ info, score: examScore, practice })], name, { type: DOCX_MIME });
+  const name = `${[safe(info.student) || '학생', safe(info.period), '채점결과'].filter(Boolean).join('_')}.pdf`;
+  return new File([buildReportPdf({ info, score: examScore, practice })], name, { type: PDF_MIME });
 }
 
-$('#btnDocxShare').addEventListener('click', async () => {
+$('#btnPdfShare').addEventListener('click', async () => {
   if (!examScore) return;
   const file = reportFile();
   if (navigator.canShare?.({ files: [file] })) {
@@ -749,11 +749,11 @@ $('#btnDocxShare').addEventListener('click', async () => {
   downloadBlob(file, file.name);
   toast('이 브라우저는 바로 보내기를 못 해서 파일로 저장했어요.');
 });
-$('#btnDocxSave').addEventListener('click', () => {
+$('#btnPdfSave').addEventListener('click', () => {
   if (!examScore) return;
   const file = reportFile();
   downloadBlob(file, file.name);
   toast(`${file.name} 을(를) 저장했어요. (다운로드 폴더)`);
 });
 
-renderDocxState();
+renderPdfState();
