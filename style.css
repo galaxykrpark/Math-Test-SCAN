@@ -137,7 +137,7 @@ input:not([type]), input[type="search"], select, textarea {
 input:focus, select:focus, textarea:focus { background: #fff; border-color: var(--violet); box-shadow: 0 0 0 4px var(--violet-soft); }
 
 /* ---------- 시험지 · 답안지 드롭존 ---------- */
-.drop-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.drop-pair { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .drop-col { min-width: 0; display: flex; flex-direction: column; }
 .drop-col .dropzone { flex: 1; }
 .drop-label { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 6px; }
@@ -147,6 +147,11 @@ input:focus, select:focus, textarea:focus { background: #fff; border-color: var(
 .dropzone.key:hover, .dropzone.key:focus-visible, .dropzone.key.dragover { border-color: var(--mint); }
 .dropzone.key.dragover { background: #d2f3e8; }
 .dropzone.key .thumb.add { border-color: #a8e6d2; color: var(--mint); }
+.drop-tag.opt.orig { background: var(--amber-soft); color: var(--amber); }
+.dropzone.orig { background: var(--amber-soft); border-color: #ffd8a0; }
+.dropzone.orig:hover, .dropzone.orig:focus-visible, .dropzone.orig.dragover { border-color: var(--amber); }
+.dropzone.orig.dragover { background: #ffe9c7; }
+.dropzone.orig .thumb.add { border-color: #ffd8a0; color: var(--amber); }
 @media (max-width: 760px) { .drop-pair { grid-template-columns: 1fr; } }
 
 .dropzone {

@@ -105,7 +105,13 @@ const GRADE_PROMPT = `당신은 수학 학원 선생님을 도와 학생 시험�
 - 문항 번호를 맞춰서 correctAnswer 를 답안지의 정답으로 씁니다.
 - 직접 푼 답과 답안지 정답이 다르면 답안지를 따르고, checks 에 "몇 번은 답안지 정답(○)과 직접 푼 답(○)이 달라 답안지를 따름"처럼 적어 선생님이 확인하게 합니다.
 - 답안지에 없는 문항이나 답안지 글씨를 알아보기 어려운 문항은 직접 풀어서 채점하고, 그 문항의 review 에 이유를 적습니다.
-- criteria 에 답안지를 기준으로 채점했다고 적습니다.`;
+- criteria 에 답안지를 기준으로 채점했다고 적습니다.
+
+시험지 원문 그림이 함께 주어지면:
+- 시험지 원문은 학생이 아무것도 쓰지 않은 원래 시험지입니다. 채점하지 말고, 학생 글씨를 가려내는 기준으로만 씁니다.
+- 학생 시험지에서 시험지 원문에 인쇄되어 있는 글자·숫자·그림·보기 번호·밑줄·빈칸 표시는 학생이 쓴 것이 아닙니다. 시험지 원문에 없는 내용만 학생이 직접 쓴 것입니다.
+- 학생 답을 읽을 때는 같은 문항을 시험지 원문과 학생 시험지에서 하나하나 견주어 보고, 원문에 없이 새로 더해진 글씨·숫자·동그라미·체크 표시만 studentAnswer 로 읽습니다. 문제에 인쇄된 숫자나 보기를 학생 답으로 잘못 읽지 않도록 특히 꼼꼼히 살핍니다.
+- 학생 글씨가 인쇄된 글자와 겹치거나 바로 붙어 있어 무엇이 학생 글씨인지 가려내기 어려우면, 가장 그럴듯하게 읽고 그 문항의 review 에 이유를 적습니다.`;
 
 const PRACTICE_SCHEMA = {
   type: 'object',
@@ -164,9 +170,10 @@ const PRACTICE_PROMPT = `당신은 수학 학원 선생님을 도와 학생에�
 const GRADE_EXAMPLE = '{"questions":[{"number":"1","type":"단원 이름","studentAnswer":"12","correctAnswer":"12","correct":true,"points":5,"earned":5,"reason":"","review":""}],"criteria":"","checks":[],"advice":"","note":""}';
 const PRACTICE_EXAMPLE = '{"sets":[{"type":"유형 이름","tip":"","problems":[{"question":"","answer":"","explanation":""}]}]}';
 
-function gradeText({ keyCount, hint, unitNames }) {
+function gradeText({ keyCount, origCount = 0, hint, unitNames }) {
   return '이 시험지를 채점해 주세요.'
     + (keyCount ? `\n답안지(정답) 그림 ${keyCount}장이 함께 있습니다. 정답은 답안지를 기준으로 확인해 주세요.` : '')
+    + (origCount ? `\n시험지 원문 그림 ${origCount}장이 함께 있습니다. 학생 시험지에서 시험지 원문에 없는 내용만 학생이 쓴 것이니, 학생 글씨와 인쇄된 원문 글을 잘 살펴 구분해 주세요.` : '')
     + (hint ? `\n참고: 지금 배우는 단원은 ${hint} 입니다.` : '')
     + (unitNames.length ? `\ntype에 쓸 단원 이름 목록: ${unitNames.slice(0, 200).join(', ')}` : '');
 }

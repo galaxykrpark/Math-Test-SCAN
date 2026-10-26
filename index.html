@@ -13,8 +13,8 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <!-- ?v= 를 붙여 브라우저가 예전에 저장해 둔 파일 대신 새 파일을 받게 합니다 -->
-  <link rel="stylesheet" href="style.css?v=20261026m2c">
-  <link rel="stylesheet" href="mobile.css?v=20261026m2c">
+  <link rel="stylesheet" href="style.css?v=20261026m3">
+  <link rel="stylesheet" href="mobile.css?v=20261026m3">
 </head>
 <body>
   <header class="topbar">
@@ -99,9 +99,9 @@
         <p class="hint">작업 중인 사진과 채점 결과는 이 폰에 저장돼서, 앱을 다시 열어도 이어서 할 수 있어요.</p>
       </section>
 
-      <!-- 2. 시험지 · 답안지 사진 -->
+      <!-- 2. 시험지 · 답안지 · 시험지 원문 사진 -->
       <section class="card step c2" id="step2">
-        <h2 class="block-title"><span class="step-badge">2</span><span class="ico">📸</span> 시험지 · 답안지 사진</h2>
+        <h2 class="block-title"><span class="step-badge">2</span><span class="ico">📸</span> 시험지 · 답안지 · 원문 사진</h2>
         <div class="drop-pair">
           <div class="drop-col">
             <p class="drop-label"><span class="drop-tag">필수</span> 📝 학생 시험지</p>
@@ -127,6 +127,19 @@
               </div>
               <p class="dz-sub cam-sub">정답지를 찍으면 그 정답으로 채점해요 · 없으면 AI가 직접 풀어요</p>
               <ul class="thumbs" id="keyThumbs"></ul>
+            </div>
+          </div>
+          <div class="drop-col">
+            <p class="drop-label"><span class="drop-tag opt orig">선택</span> 📄 시험지 원문</p>
+            <div class="dropzone orig" id="origDropzone">
+              <input type="file" id="origCamera" accept="image/*" capture="environment" hidden>
+              <input type="file" id="origInput" accept="image/*" multiple hidden>
+              <div class="cam-btns">
+                <button type="button" class="btn-cam" data-open="origCamera">📷 사진 찍기</button>
+                <button type="button" class="btn-album" data-open="origInput">🖼️ 앨범</button>
+              </div>
+              <p class="dz-sub cam-sub">아무것도 안 쓴 빈 시험지를 찍으면 AI가 학생 글씨를 더 잘 구분해요</p>
+              <ul class="thumbs" id="origThumbs"></ul>
             </div>
           </div>
         </div>
@@ -188,9 +201,9 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="curriculum.js?v=20261026m2c"></script>
-  <script src="ai.js?v=20261026m2c"></script>
-  <script src="pdf.js?v=20261026m2c"></script>
-  <script src="app.js?v=20261026m2c"></script>
+  <script src="curriculum.js?v=20261026m3"></script>
+  <script src="ai.js?v=20261026m3"></script>
+  <script src="pdf.js?v=20261026m3"></script>
+  <script src="app.js?v=20261026m3"></script>
 </body>
 </html>

@@ -44,6 +44,7 @@ button.menu-pill { border: 0; cursor: pointer; }
 .btn-cam { background: var(--ink); color: var(--lime); }
 .btn-album { background: #fff; color: var(--ink); border: 1px solid var(--line); font-size: 15px; }
 .dropzone.key .btn-cam { background: var(--mint); color: #fff; }
+.dropzone.orig .btn-cam { background: var(--amber); color: #fff; }
 .btn-cam:active, .btn-album:active { transform: scale(.98); }
 .btn-cam:disabled, .btn-album:disabled { opacity: .45; }
 .cam-sub { text-align: center; margin: 10px 0 0; }

@@ -115,15 +115,16 @@ function saveSession() {
   if (restoring) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    const data = { savedAt: Date.now(), info: studentInfo(), scans, keys, examScore, practice, pending };
+    const data = { savedAt: Date.now(), info: studentInfo(), scans, keys, origs, examScore, practice, pending };
     sessionStore('readwrite', (s) => s.put(data, 'session')).catch(() => {});
   }, 300);
 }
 ['studentName', 'teacherName', 'reportPeriod', 'actualGrade'].forEach((id) => $(`#${id}`).addEventListener('change', saveSession));
 
-/* ---------- 학생 시험지 · 답안지(정답) 사진 ---------- */
+/* ---------- 학생 시험지 · 답안지(정답) · 시험지 원문 사진 ---------- */
 const scans = []; // 학생 시험지 { id, name, dataUrl }
 const keys = []; // 답안지(정답) { id, name, dataUrl } — 채점할 때 정답 확인용으로 함께 보냅니다.
+const origs = []; // 시험지 원문(빈 시험지) { id, name, dataUrl } — 인쇄된 글과 학생 글씨를 구분하는 데 쓰라고 함께 보냅니다.
 
 function setScanMsg(msg, isError = false) {
   const el = $('#scanMsg');
@@ -170,7 +171,7 @@ function labelImage(dataUrl, label) {
       canvas.width = img.width;
       canvas.height = img.height + band;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = label.startsWith('답안지') ? '#19b38a' : '#16161d';
+      ctx.fillStyle = label.startsWith('답안지') ? '#19b38a' : label.startsWith('시험지 원문') ? '#f08c00' : '#16161d';
       ctx.fillRect(0, 0, canvas.width, band);
       ctx.fillStyle = '#fff';
       ctx.font = `bold ${Math.round(band * 0.55)}px sans-serif`;
@@ -188,10 +189,11 @@ function attachedMsg() {
   const parts = [];
   if (scans.length) parts.push(`시험지 ${scans.length}장`);
   if (keys.length) parts.push(`답안지 ${keys.length}장`);
+  if (origs.length) parts.push(`시험지 원문 ${origs.length}장`);
   return parts.length ? `${parts.join(', ')}이 들어왔어요.` : '';
 }
 
-// 사진 찍기·앨범에서 고르기·(PC에서는) 끌어다 놓기·지우기가 되는 사진 칸을 만듭니다. (시험지 칸, 답안지 칸 공용)
+// 사진 찍기·앨범에서 고르기·(PC에서는) 끌어다 놓기·지우기가 되는 사진 칸을 만듭니다. (시험지 칸, 답안지 칸, 원문 칸 공용)
 function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
   async function addFiles(fileList, fromCamera) {
     const skipped = [];
@@ -221,7 +223,7 @@ function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
       </li>`).join('');
     zone.classList.toggle('has-files', store.length > 0);
     zone.querySelectorAll('.btn-cam, .btn-album').forEach((b) => { b.disabled = store.length >= MAX_SCANS; });
-    resetGrade(); // 시험지나 답안지가 바뀌면 이전 채점 결과는 맞지 않으니 지웁니다.
+    resetGrade(); // 시험지·답안지·원문이 바뀌면 이전 채점 결과는 맞지 않으니 지웁니다.
   }
 
   zone.addEventListener('click', (e) => {
@@ -254,10 +256,12 @@ function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
 
 const dropzone = $('#dropzone');
 const keyDropzone = $('#keyDropzone');
+const origDropzone = $('#origDropzone');
 const renderScans = setupImageZone(dropzone, $('#scanCamera'), $('#scanInput'), $('#thumbs'), scans, '시험지');
 const renderKeys = setupImageZone(keyDropzone, $('#keyCamera'), $('#keyInput'), $('#keyThumbs'), keys, '답안지');
+const renderOrigs = setupImageZone(origDropzone, $('#origCamera'), $('#origInput'), $('#origThumbs'), origs, '시험지 원문');
 ['dragover', 'drop'].forEach((t) => window.addEventListener(t, (e) => {
-  if (!dropzone.contains(e.target) && !keyDropzone.contains(e.target)) e.preventDefault();
+  if (![dropzone, keyDropzone, origDropzone].some((z) => z.contains(e.target))) e.preventDefault();
 }));
 
 /* ---------- 내 폰의 AI 앱으로 보내기 ---------- */
@@ -537,12 +541,11 @@ function prepareGradeFiles() {
   if (scans.length && !useApi()) prepareTimer = setTimeout(gradeFiles, 400);
 }
 function gradeFiles() {
-  gradeFilesReady ||= labeledImages().then((images) => images.map((img, i) => dataUrlToFile(img.dataUrl,
-    `${i < scans.length ? '시험지' : '답안지'}_${i < scans.length ? i + 1 : i - scans.length + 1}.jpg`)));
+  gradeFilesReady ||= labeledImages().then((images) => images.map((img) => dataUrlToFile(img.dataUrl, img.fileName)));
   return gradeFilesReady;
 }
 const gradeHandoffText = () => handoffPrompt(GRADE_PROMPT, gradeRequest(), GRADE_EXAMPLE,
-  '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …] 처럼 어떤 사진인지 적혀 있습니다.');
+  '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …], [시험지 원문 …] 처럼 어떤 사진인지 적혀 있습니다.');
 
 // 학년을 골랐으면 그 학년 단원 이름으로, 아니면 초1~중3 전체 단원 이름으로 문제 유형을 나누게 합니다.
 function gradeRequest() {
@@ -553,15 +556,19 @@ function gradeRequest() {
     : '';
   const unitNames = [...new Set((terms ? Object.values(terms).flat()
     : SCHOOL_GRADES.flatMap((g) => Object.values(CURRICULUM[g]).flat())).map((u) => u.name))];
-  return gradeText({ keyCount: keys.length, hint, unitNames });
+  return gradeText({ keyCount: keys.length, origCount: origs.length, hint, unitNames });
 }
 
 async function labeledImages() {
-  const label = (list, what) => Promise.all(list.map(async (s, i) => {
+  const label = (list, what, file) => Promise.all(list.map(async (s, i) => {
     const name = `${what} ${i + 1}/${list.length}`;
-    return { label: name, dataUrl: await labelImage(s.dataUrl, name) };
+    return { label: name, fileName: `${file}_${i + 1}.jpg`, dataUrl: await labelImage(s.dataUrl, name) };
   }));
-  return [...await label(scans, '학생 시험지'), ...await label(keys, '답안지(정답) — 채점하지 말고 정답 확인용')];
+  return [
+    ...await label(scans, '학생 시험지', '시험지'),
+    ...await label(keys, '답안지(정답) — 채점하지 말고 정답 확인용', '답안지'),
+    ...await label(origs, '시험지 원문 — 학생 글씨 없는 원본, 채점하지 말 것', '시험지원문'),
+  ];
 }
 
 function finishGrade(result, engine) {
@@ -951,8 +958,10 @@ $('#btnNewStudent').addEventListener('click', () => {
   ['studentName', 'reportPeriod'].forEach((id) => { $(`#${id}`).value = ''; });
   scans.length = 0;
   keys.length = 0;
+  origs.length = 0;
   renderScans();
-  renderKeys(); // 채점 결과·보충 문제·기다리던 요청도 함께 지워집니다.
+  renderKeys();
+  renderOrigs(); // 채점 결과·보충 문제·기다리던 요청도 함께 지워집니다.
   setScanMsg('');
   $('#step1').scrollIntoView({ behavior: 'smooth' });
   toast('새 학생을 시작해요. 학생 이름부터 넣어 주세요.');
@@ -976,8 +985,10 @@ async function restoreSession() {
       .forEach(([id, v]) => { if (v) $(`#${id}`).value = v; });
     scans.push(...(s.scans || []));
     keys.push(...(s.keys || []));
+    origs.push(...(s.origs || []));
     renderScans();
     renderKeys();
+    renderOrigs();
     setScanMsg(attachedMsg());
     if (s.examScore && scans.length) {
       examScore = s.examScore;
