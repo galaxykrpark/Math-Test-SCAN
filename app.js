@@ -75,7 +75,6 @@ renderToolPick();
 
 /* ---------- 학생 정보 ---------- */
 const DEFAULT_ACADEMY = '양덕롯데캐슬교실';
-SCHOOL_GRADES.forEach((g) => $('#actualGrade').append(new Option(g, g)));
 try { $('#academyName').value = localStorage.getItem(ACADEMY_KEY) || DEFAULT_ACADEMY; } catch {}
 $('#academyName').addEventListener('change', (e) => {
   try { localStorage.setItem(ACADEMY_KEY, e.target.value.trim()); } catch {}
@@ -86,7 +85,6 @@ const studentInfo = () => ({
   student: $('#studentName').value.trim(),
   teacher: $('#teacherName').value.trim(),
   period: $('#reportPeriod').value.trim(),
-  grade: $('#actualGrade').value,
 });
 
 /* ---------- 작업 저장 ----------
@@ -120,7 +118,7 @@ function saveSession() {
     sessionStore('readwrite', (s) => s.put(data, 'session')).catch(() => {});
   }, 300);
 }
-['studentName', 'teacherName', 'reportPeriod', 'actualGrade'].forEach((id) => $(`#${id}`).addEventListener('change', saveSession));
+['studentName', 'teacherName', 'reportPeriod'].forEach((id) => $(`#${id}`).addEventListener('change', saveSession));
 
 /* ---------- 학생 시험지 · 답안지(정답) · 시험지 원문 사진 ---------- */
 const scans = []; // 학생 시험지 { id, name, dataUrl }
@@ -548,16 +546,10 @@ function gradeFiles() {
 const gradeHandoffText = () => handoffPrompt(GRADE_PROMPT, gradeRequest(), GRADE_EXAMPLE,
   '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …], [시험지 원문 …] 처럼 어떤 사진인지 적혀 있습니다.');
 
-// 학년을 골랐으면 그 학년 단원 이름으로, 아니면 초1~중3 전체 단원 이름으로 문제 유형을 나누게 합니다.
+// 초1~중3 전체 단원 이름으로 문제 유형을 나누게 합니다.
 function gradeRequest() {
-  const grade = $('#actualGrade').value;
-  const terms = grade ? CURRICULUM[grade] : null;
-  const hint = terms
-    ? `${grade} (${Object.entries(terms).map(([sem, units]) => `${sem}: ${units.map((u) => u.name).join(', ')}`).join(' / ')})`
-    : '';
-  const unitNames = [...new Set((terms ? Object.values(terms).flat()
-    : SCHOOL_GRADES.flatMap((g) => Object.values(CURRICULUM[g]).flat())).map((u) => u.name))];
-  return gradeText({ keyCount: keys.length, origCount: origs.length, hint, unitNames });
+  const unitNames = [...new Set(SCHOOL_GRADES.flatMap((g) => Object.values(CURRICULUM[g]).flat()).map((u) => u.name))];
+  return gradeText({ keyCount: keys.length, origCount: origs.length, unitNames });
 }
 
 async function labeledImages() {
@@ -810,7 +802,7 @@ async function makePractice() {
       .map((q) => q.reason || `학생 답 ${q.studentAnswer}, 정답 ${q.correctAnswer}`);
     return { type: name, earned: t.earned, max: t.max, mistakes };
   });
-  const request = practiceText({ grade: $('#actualGrade').value, count: +$('#practiceCount').value, types });
+  const request = practiceText({ count: +$('#practiceCount').value, types });
   const run = ++practiceRun;
   const tool = currentTool();
   practice = null;
@@ -873,8 +865,8 @@ function renderPractice() {
 function printPractice() {
   const info = studentInfo();
   const title = `${info.student ? `${info.student} 학생 ` : ''}보충 문제`;
-  // 1단계에서 입력한 학원명·학년·주제학습 단원명·선생님 이름을 문제지 머리글에 넣습니다.
-  const meta = [info.academy, info.grade, info.period, `${info.teacher || '담임'} 선생님`].filter(Boolean).map(esc).join(' · ');
+  // 1단계에서 입력한 학원명·주제학습 단원명·선생님 이름을 문제지 머리글에 넣습니다.
+  const meta = [info.academy, info.period, `${info.teacher || '담임'} 선생님`].filter(Boolean).map(esc).join(' · ');
   let n = 0;
   const sheet = practice.sets.map((s) => `
     <h2>${esc(s.type)}</h2>
@@ -982,7 +974,7 @@ async function restoreSession() {
   try { s = await sessionStore('readonly', (st) => st.get('session')); } catch {}
   if (s && Date.now() - s.savedAt < SESSION_HOURS * 3600 * 1000) {
     const info = s.info || {};
-    [['studentName', info.student], ['teacherName', info.teacher], ['reportPeriod', info.period], ['actualGrade', info.grade]]
+    [['studentName', info.student], ['teacherName', info.teacher], ['reportPeriod', info.period]]
       .forEach(([id, v]) => { if (v) $(`#${id}`).value = v; });
     scans.push(...(s.scans || []));
     keys.push(...(s.keys || []));

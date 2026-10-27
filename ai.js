@@ -147,7 +147,7 @@ const PRACTICE_SCHEMA = {
 };
 
 const PRACTICE_PROMPT = `당신은 수학 학원 선생님을 도와 학생에게 줄 보충 문제를 만드는 도우미입니다.
-학생의 학년, 점수가 낮았던 문제 유형, 그 유형에서 학생이 틀린 내용이 주어집니다. 유형마다 보충 문제를 정해진 개수만큼 만들어 주세요.
+점수가 낮았던 문제 유형, 그 유형에서 학생이 틀린 내용이 주어집니다. 유형마다 보충 문제를 정해진 개수만큼 만들어 주세요.
 
 유형마다 다음을 적습니다.
 - type: 주어진 유형 이름을 글자 그대로 씁니다.
@@ -158,7 +158,7 @@ const PRACTICE_PROMPT = `당신은 수학 학원 선생님을 도와 학생에�
   - explanation: 풀이를 학생이 이해할 수 있게 한두 문장으로 씁니다.
 
 지켜야 할 것:
-- 한국 초·중학교 수학 교육과정의 해당 학년 수준에 맞춥니다. 학년이 없으면 틀린 문제의 수준에 맞춥니다.
+- 한국 초·중학교 수학 교육과정에 맞추고, 틀린 문제의 수준에 맞춥니다.
 - 학생이 틀린 내용(예: 7단 곱셈, 단위 바꾸기)을 집중해서 연습할 수 있게 만듭니다.
 - 쉬운 문제부터 시작해 시험 문제와 비슷한 수준까지 차근차근 어려워지게 배열합니다.
 - 계산 문제와 생활 속 문장제를 섞습니다. 틀린 문제를 그대로 베끼지 말고 숫자, 순서, 물건을 바꿔서 만듭니다.
@@ -170,17 +170,16 @@ const PRACTICE_PROMPT = `당신은 수학 학원 선생님을 도와 학생에�
 const GRADE_EXAMPLE = '{"questions":[{"number":"1","type":"단원 이름","studentAnswer":"12","correctAnswer":"12","correct":true,"points":5,"earned":5,"reason":"","review":""}],"criteria":"","checks":[],"advice":"","note":""}';
 const PRACTICE_EXAMPLE = '{"sets":[{"type":"유형 이름","tip":"","problems":[{"question":"","answer":"","explanation":""}]}]}';
 
-function gradeText({ keyCount, origCount = 0, hint, unitNames }) {
+function gradeText({ keyCount, origCount = 0, unitNames }) {
   return '이 시험지를 채점해 주세요.'
     + (keyCount ? `\n답안지(정답) 그림 ${keyCount}장이 함께 있습니다. 정답은 답안지를 기준으로 확인해 주세요.` : '')
     + (origCount ? `\n시험지 원문 그림 ${origCount}장이 함께 있습니다. 학생 시험지에서 시험지 원문에 없는 내용만 학생이 쓴 것이니, 학생 글씨와 인쇄된 원문 글을 잘 살펴 구분해 주세요.` : '')
-    + (hint ? `\n참고: 지금 배우는 단원은 ${hint} 입니다.` : '')
     + (unitNames.length ? `\ntype에 쓸 단원 이름 목록: ${unitNames.slice(0, 200).join(', ')}` : '');
 }
 
-function practiceText({ grade, count, types }) {
+function practiceText({ count, types }) {
   const n = Math.min(Math.max(+count || 5, 1), 10);
-  const lines = [`학년: ${grade || '미입력'}`, `유형마다 만들 문제 수: ${n}개`, ''];
+  const lines = [`유형마다 만들 문제 수: ${n}개`, ''];
   for (const t of types.slice(0, 6)) {
     lines.push(`[유형] ${t.type} (시험 점수 ${+t.earned}/${+t.max}점)`);
     for (const m of t.mistakes.slice(0, 8)) lines.push(`- 틀린 내용: ${m}`);

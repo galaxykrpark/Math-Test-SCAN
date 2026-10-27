@@ -243,7 +243,7 @@ function buildReportPdf({ info, score: s, practice }) {
   const bullets = (list) => list.forEach((t) => line(`• ${t}`, { after: 2 }));
 
   d.title(`${info.student ? `${info.student} 학생 ` : ''}수학 시험지 채점 결과`);
-  line({ t: [info.academy, info.grade, info.period, `${info.teacher || '담임'} 선생님`, `작성일 ${today}`].filter(Boolean).join(' · '), color: '8A8A99' });
+  line({ t: [info.academy, info.period, `${info.teacher || '담임'} 선생님`, `작성일 ${today}`].filter(Boolean).join(' · '), color: '8A8A99' });
 
   d.h1('1. 채점 점수');
   line([{ t: '총점  ', bold: true }, { t: `${f1(s.total)} / ${f1(s.maxScore)}점`, bold: true, size: 16, color: '5B3FD6' },
