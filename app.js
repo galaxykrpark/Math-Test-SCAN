@@ -74,8 +74,9 @@ $('#aiPill').addEventListener('click', () => $('#step0').scrollIntoView({ behavi
 renderToolPick();
 
 /* ---------- 학생 정보 ---------- */
+const DEFAULT_ACADEMY = '양덕롯데캐슬교실';
 SCHOOL_GRADES.forEach((g) => $('#actualGrade').append(new Option(g, g)));
-try { $('#academyName').value = localStorage.getItem(ACADEMY_KEY) || ''; } catch {}
+try { $('#academyName').value = localStorage.getItem(ACADEMY_KEY) || DEFAULT_ACADEMY; } catch {}
 $('#academyName').addEventListener('change', (e) => {
   try { localStorage.setItem(ACADEMY_KEY, e.target.value.trim()); } catch {}
 });
@@ -872,7 +873,7 @@ function renderPractice() {
 function printPractice() {
   const info = studentInfo();
   const title = `${info.student ? `${info.student} 학생 ` : ''}보충 문제`;
-  // 1단계에서 입력한 학원명·학년·학습지 기간·선생님 이름을 문제지 머리글에 넣습니다.
+  // 1단계에서 입력한 학원명·학년·주제학습 단원명·선생님 이름을 문제지 머리글에 넣습니다.
   const meta = [info.academy, info.grade, info.period, `${info.teacher || '담임'} 선생님`].filter(Boolean).map(esc).join(' · ');
   let n = 0;
   const sheet = practice.sets.map((s) => `
