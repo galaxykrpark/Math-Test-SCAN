@@ -7,7 +7,7 @@ button.menu-pill { border: 0; cursor: pointer; }
 .btn-outline { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-height: 44px; }
 
 /* ---------- AI 선택 ---------- */
-.tool-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tool-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
 .tool {
   margin: 0; cursor: pointer; text-align: center; border: 2px solid var(--line); border-radius: 18px;
   padding: 14px 6px 10px; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px;

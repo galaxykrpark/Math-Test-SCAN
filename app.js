@@ -6,6 +6,8 @@ const SCHOOL_GRADES = GRADES.filter((g) => g !== '고등'); // 초1 ~ 중3
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (x) => String(+(+x).toFixed(1));
+// 마지막 글자에 받침이 있는지 (이/가 고르기용: 'AI 앱이', '제미나이가'). 한글이 아니면 받침 없음으로 봅니다.
+const hasBatchim = (s) => { const c = String(s).trim().slice(-1).charCodeAt(0) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 > 0; };
 
 let toastTimer;
 function toast(msg) {
@@ -27,7 +29,7 @@ function renderToolPick() {
     <label class="tool ${aiSettings.tool === id ? 'on' : ''}">
       <input type="radio" name="aiTool" value="${id}" ${aiSettings.tool === id ? 'checked' : ''}>
       <span class="tool-ico">${t.icon}</span><b>${esc(t.label)}</b>
-      <small>${aiSettings.keys[id] ? '🔑 키 있음' : '앱'}</small>
+      <small>${aiSettings.keys[id] ? '🔑 키 있음' : '키 없음'}</small>
     </label>`).join('');
   document.querySelectorAll('input[name="aiMode"]').forEach((r) => { r.checked = r.value === aiSettings.mode; });
   const tool = currentTool();
@@ -38,7 +40,7 @@ function renderToolPick() {
   $('#apiKey').value = aiSettings.keys[aiSettings.tool] || '';
   $('#apiModel').value = aiSettings.models[aiSettings.tool] || '';
   $('#apiModel').placeholder = `기본: ${tool.model}`;
-  $('#aiPill').textContent = `${tool.icon} ${tool.label} · ${useApi() ? '자동' : '앱'}`;
+  $('#aiPill').textContent = '📲 AI 앱';
 }
 
 $('#toolPick').addEventListener('change', (e) => {
@@ -307,7 +309,7 @@ function downloadBlob(blob, name) {
    2) AI 앱에서 답의 [복사]를 누르고 돌아오면 클립보드를 자동으로 읽어 바로 반영합니다.
       또는 AI 답 글을 선택해 [공유] → onemath2 를 고르면 이 앱이 열리면서 바로 반영합니다. (manifest 의 share_target)
    답을 기다리는 동안의 사진·결과는 폰에 저장해 두어서, 앱이 새로 열려도 이어집니다. (아래 '작업 저장') */
-let pending = null; // AI 앱의 답을 기다리는 중: { kind: 'grade'|'practice', tool, text }
+let pending = null; // AI 앱의 답을 기다리는 중: { kind: 'grade'|'practice', text }
 let lastClip = ''; // 이미 읽어 본 클립보드 글 (같은 글을 두 번 반영하지 않게)
 let awayFromApp = false; // 공유 창이나 AI 앱에 다녀왔을 수 있음 (돌아와 화면을 누르면 클립보드를 읽어 봄)
 
@@ -344,26 +346,27 @@ function handoffMsg(kind, t, isError = false) {
 // AI 앱 안내 칸을 그리고, 바로 공유 창을 띄웁니다. (autoSend: 'AI로 점수계산'을 누른 그 자리에서 부를 때)
 // files: 보낼 사진 File 목록, text: 지시문, what: 제목에 쓸 말
 async function showHandoff(kind, { files, text, what, autoSend = true }) {
-  const tool = currentTool();
+  // 어떤 AI 앱을 쓸지는 공유 창에서 고르므로, 앱 열기와 도움말은 모든 AI 앱 것을 보여 줍니다.
+  const tools = Object.values(AI_TOOLS);
   const box = handoffBox(kind);
   box.innerHTML = `
     <div class="handoff">
-      <p class="handoff-title">${tool.icon} ${esc(tool.label)} 앱으로 ${esc(what)}</p>
+      <p class="handoff-title">📲 AI 앱으로 ${esc(what)}</p>
       <ol class="handoff-steps">
         <li>
-          공유 창에서 <b>${esc(tool.label)}</b>를 고르고, 앱에서 <b>전송</b>을 누르세요.
+          공유 창에서 <b>쓰는 AI 앱</b>(ChatGPT·제미나이·Claude 등)을 고르고, 앱에서 <b>전송</b>을 누르세요.
           <span class="sub">지시문은 복사도 해 두었어요. 앱 입력칸에 글이 없으면 길게 눌러 붙여 넣으세요.</span>
           <div class="handoff-btns">
             <button type="button" class="btn-send">📤 ${autoSend ? '다시 ' : ''}보내기</button>
             <button type="button" class="btn-outline btn-copy">📋 지시문 복사</button>
             ${files.length ? '<button type="button" class="btn-outline btn-save-imgs">💾 사진 저장</button>' : ''}
-            <a class="btn-outline" href="${tool.appUrl}" target="_blank" rel="noopener">↗ 앱 열기</a>
+            ${tools.map((t) => `<a class="btn-outline" href="${t.appUrl}" target="_blank" rel="noopener">↗ ${esc(t.label)} 열기</a>`).join('')}
           </div>
         </li>
         <li>
           답이 다 나오면 답 아래의 <b>복사</b> 버튼을 누르고 이 앱으로 돌아오세요.
           <span class="sub">돌아오면 자동으로 읽어서 반영해요. 답 글을 길게 눌러 선택한 뒤 <b>공유 → onemath2</b> 를 골라도 돼요.</span>
-          ${tool.returnTip ? `<span class="sub tool-tip">💡 ${tool.returnTip}</span>` : ''}
+          ${tools.filter((t) => t.returnTip).map((t) => `<span class="sub tool-tip">💡 ${t.returnTip}</span>`).join('')}
         </li>
         <li class="auto-wait">
           <p class="wait-line"><span class="spin">⏳</span> <b>AI 답을 기다리는 중…</b></p>
@@ -382,14 +385,13 @@ async function showHandoff(kind, { files, text, what, autoSend = true }) {
   const send = async () => {
     const result = await shareToApp(files, text);
     if (result === 'shared' || result === 'unsupported') awayFromApp = true;
-    if (result === 'shared') msg(`${tool.label}에서 전송하고, 답이 나오면 복사해서 돌아와 주세요. 자동으로 반영해요.`);
+    if (result === 'shared') msg('AI 앱에서 전송하고, 답이 나오면 복사해서 돌아와 주세요. 자동으로 반영해요.');
     else if (result === 'aborted') msg('보내기를 닫았어요. 📤 보내기를 다시 눌러 주세요.');
     else if (result === 'failed') msg(`바로 보내지 못했어요. 📤 보내기를 다시 누르거나, '사진 저장'과 '지시문 복사' 후 앱에 직접 넣어 주세요.`, true);
     else {
-      // 공유 기능이 없는 브라우저(PC 등): 사진을 저장하고 지시문을 복사한 뒤 앱을 엽니다.
+      // 공유 기능이 없는 브라우저(PC 등): 사진을 저장하고 지시문을 복사합니다. AI는 위의 열기 버튼으로 직접 엽니다.
       if (files.length) saveImages();
-      msg(`이 브라우저는 앱으로 바로 보내기를 못 해요. ${files.length ? '사진을 저장하고 ' : ''}지시문을 복사했어요. ${tool.label}에 ${files.length ? '사진을 올리고 ' : ''}지시문을 붙여 넣어 주세요.`);
-      window.open(tool.appUrl, '_blank', 'noopener');
+      msg(`이 브라우저는 앱으로 바로 보내기를 못 해요. ${files.length ? '사진을 저장하고 ' : ''}지시문을 복사했어요. 위의 ↗ 열기 버튼으로 AI를 열고 ${files.length ? '사진을 올린 뒤 ' : ''}지시문을 붙여 넣어 주세요.`);
     }
   };
 
@@ -433,7 +435,7 @@ function receiveAnswer(text, { quiet = false } = {}) {
     ? json.questions.every((q) => q?.type === '단원 이름')
     : json.sets.every((s) => s?.type === '유형 이름');
   if (isExample) return fail(ownPrompt);
-  const engine = `${(AI_TOOLS[pending?.tool] || currentTool()).label} 앱`;
+  const engine = 'AI 앱';
   try {
     if (kind === 'grade') {
       if (!scans.length) throw new Error('시험지 사진이 없어서 채점 결과를 붙일 수 없어요. 사진을 넣고 다시 보내 주세요.');
@@ -590,7 +592,7 @@ async function gradeScans() {
     renderGrade('waiting');
     const files = await gradeFiles();
     const text = gradeHandoffText();
-    pending = { kind: 'grade', tool: aiSettings.tool, text };
+    pending = { kind: 'grade', text };
     saveSession();
     const sending = showHandoff('grade', { files, text, what: '채점 보내기' });
     $('#gradeHandoff').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -633,7 +635,7 @@ function renderGrade(state, msg = '') {
     return;
   }
   if (state === 'waiting') {
-    box.innerHTML = `<p class="grade-empty">📲 ${esc(currentTool().label)} 앱의 답을 기다리고 있어요. 답을 복사해서 돌아오면 자동으로 채점돼요.</p>`;
+    box.innerHTML = `<p class="grade-empty">📲 AI 앱의 답을 기다리고 있어요. 답을 복사해서 돌아오면 자동으로 채점돼요.</p>`;
     return;
   }
   if (state === 'error') {
@@ -813,7 +815,7 @@ async function makePractice() {
   $('#practiceResult').innerHTML = '';
   if (!useApi()) {
     const text = handoffPrompt(PRACTICE_PROMPT, `아래 정보로 보충 문제를 만들어 주세요.\n\n${request}`, PRACTICE_EXAMPLE);
-    pending = { kind: 'practice', tool: aiSettings.tool, text };
+    pending = { kind: 'practice', text };
     saveSession();
     const sending = showHandoff('practice', { files: [], text, what: '보충 문제 요청하기' });
     $('#practiceHandoff').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -847,7 +849,7 @@ function renderPractice() {
   $('#practiceResult').classList.remove('show-ans');
   $('#practiceResult').innerHTML = `
     <div class="practice-bar">
-      <span><b>${practice.sets.length}개 유형 · ${total}문제</b> ${practice.engine ? `<small>${esc(practice.engine)}가 만들었어요</small>` : ''}</span>
+      <span><b>${practice.sets.length}개 유형 · ${total}문제</b> ${practice.engine ? `<small>${esc(practice.engine)}${hasBatchim(practice.engine) ? '이' : '가'} 만들었어요</small>` : ''}</span>
       <label class="check-inline"><input type="checkbox" id="practiceShowAns"> 정답·풀이 보기</label>
       <button type="button" class="btn-outline" id="btnPracticePrint">🖨️ 학생용 인쇄</button>
     </div>

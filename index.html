@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <!-- ?v= 를 붙여 브라우저가 예전에 저장해 둔 파일 대신 새 파일을 받게 합니다 -->
   <link rel="stylesheet" href="style.css?v=20261027m1">
-  <link rel="stylesheet" href="mobile.css?v=20261027m1">
+  <link rel="stylesheet" href="mobile.css?v=20261028c">
 </head>
 <body>
   <header class="topbar">
@@ -47,7 +47,6 @@
       <!-- 0. AI 선택 -->
       <section class="card step" id="step0">
         <h2 class="block-title"><span class="step-badge">AI</span><span class="ico">🤖</span> 채점할 AI 고르기</h2>
-        <div class="tool-pick" role="radiogroup" aria-label="AI 도구" id="toolPick"></div>
         <div class="mode-pick" role="radiogroup" aria-label="연결 방식">
           <label class="mode"><input type="radio" name="aiMode" value="app">
             <span><b>📲 내 폰의 AI 앱으로 자동 보내기</b><small>버튼 한 번에 사진·지시문을 AI 앱으로 보내고, AI 답을 복사해 돌아오면 자동으로 채점돼요. 키 필요 없음</small></span></label>
@@ -55,6 +54,8 @@
             <span><b>🔑 API 키로 자동 채점</b><small>키를 한 번 넣으면 이 앱 안에서 버튼 한 번에 끝나요</small></span></label>
         </div>
         <div class="key-box hidden" id="keyBox">
+          <!-- 앱으로 보내기는 공유 창에서 AI 앱을 고르므로, AI 고르기는 API 키로 채점할 때만 보입니다. -->
+          <div class="tool-pick" role="radiogroup" aria-label="AI 도구" id="toolPick"></div>
           <label for="apiKey"><span id="keyLabel">API 키</span> <span class="label-note" id="keyNote"></span></label>
           <div class="key-row">
             <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="여기에 키를 붙여 넣으세요">
@@ -198,6 +199,6 @@
   <script src="curriculum.js?v=20261027m1"></script>
   <script src="ai.js?v=20261027m1"></script>
   <script src="pdf.js?v=20261027m1"></script>
-  <script src="app.js?v=20261028b"></script>
+  <script src="app.js?v=20261028c"></script>
 </body>
 </html>
