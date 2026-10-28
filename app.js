@@ -140,8 +140,12 @@ function readAsDataUrl(file) {
   });
 }
 
-// 큰 사진은 AI가 받을 수 있는 크기로 줄입니다. (폰 카메라 사진은 4000px 넘게 크고, 그대로 두면 폰 메모리가 모자라요)
-function shrinkImage(dataUrl, maxSide = 2000) {
+// 큰 사진은 긴 변 1500px로 줄입니다. (폰 카메라 사진은 4000px 넘게 크고, 그대로 두면 폰 메모리가 모자라요)
+// 1500px이면 수학 글씨를 읽기에 충분하고, 올리는 양이 줄어 전송이 빨라지며 유료 AI의 사진 토큰(비용)도 줄어요.
+// 여기서는 품질을 높게(0.9) 두고, 실제로 보낼 때 labelImage에서 한 번만 0.8로 압축합니다. (두 번 낮게 압축하면 글씨가 뭉개져요)
+const SHRINK_MAX_SIDE = 1500;
+const SEND_JPEG_QUALITY = 0.85;
+function shrinkImage(dataUrl, maxSide = SHRINK_MAX_SIDE) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -177,7 +181,7 @@ function labelImage(dataUrl, label) {
       ctx.textBaseline = 'middle';
       ctx.fillText(`[${label}]`, band * 0.3, band / 2);
       ctx.drawImage(img, 0, band);
-      resolve(canvas.toDataURL('image/jpeg', 0.88));
+      resolve(canvas.toDataURL('image/jpeg', SEND_JPEG_QUALITY));
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
