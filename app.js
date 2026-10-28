@@ -65,6 +65,11 @@ $('#apiModel').addEventListener('change', (e) => {
   saveAiSettings();
   renderToolPick();
 });
+$('#btnKeyShow').addEventListener('click', () => {
+  const input = $('#apiKey');
+  input.type = input.type === 'password' ? 'text' : 'password';
+  $('#btnKeyShow').textContent = input.type === 'password' ? '보기' : '숨기기';
+});
 $('#aiPill').addEventListener('click', () => $('#step0').scrollIntoView({ behavior: 'smooth' }));
 renderToolPick();
 
