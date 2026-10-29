@@ -79,13 +79,13 @@ const GRADE_PROMPT = `당신은 수학 학원 선생님을 도와 학생 시험�
 [학생 시험지] 그림이 여러 장이면 이어지는 한 시험지로 보고, 모든 문항을 빠짐없이 채점하세요.
 
 문항마다:
-- number: 시험지의 문항 번호 (예: "1", "서술형 2")
+- number: 시험지의 큰 문항 번호 (예: "1", "서술형 2"). (1)(2) 같은 소문항은 따로 나누지 않고 한 문항으로 묶습니다.
 - type: 문제 유형(단원) 이름. 단원 이름 목록이 있으면 그중에서 글자 그대로 고르고, 같은 유형은 늘 같은 이름으로 씁니다.
-- studentAnswer: 학생이 쓴 최종 답. 비어 있으면 "(무응답)"
-- correctAnswer: 정답 (직접 풀어서 구함)
-- correct: 학생 답이 정답이면 true
+- studentAnswer: 학생이 쓴 최종 답. 소문항은 "(1) … (2) …"처럼 함께 씁니다. 비어 있으면 "(무응답)"
+- correctAnswer: 정답 (직접 풀어서 구함, 소문항은 studentAnswer와 같은 모양)
+- correct: 모든 소문항까지 정답이면 true
 - points: 시험지의 배점. 안 보이면 0
-- earned: 받은 점수. 맞으면 points, 틀리면 0. 서술형·여러 칸 문항은 부분 점수 가능
+- earned: 받은 점수. 맞으면 points, 틀리면 0. 소문항·서술형은 맞은 만큼 부분 점수. 배점이 안 보이면(points 0) 맞은 비율을 0~1로 씁니다 (예: 소문항 3개 중 2개 맞으면 0.67)
 - reason: 틀렸거나 부분 점수인 이유 한 문장 (예: "6×7을 41로 계산함"). 맞으면 ""
 - review: 확실히 채점하기 어려우면 그 이유 한 문장, 확실하면 "". 흘려 쓴 글씨(1과 7, 4와 9, 0과 6, <와 >), 지우다 만 답·덧쓴 답, 두 가지로 읽히는 답, 답 칸 밖의 답, 판단이 애매한 서술형일 때 씁니다. 이때도 가장 그럴듯한 답으로 채점하고 어떻게 읽었는지 적습니다 (예: "7인지 1인지 애매, 7로 읽고 정답 처리").
 
@@ -98,6 +98,8 @@ const GRADE_PROMPT = `당신은 수학 학원 선생님을 도와 학생 시험�
 규칙:
 - 선생님의 채점 표시(O, X, ✓, 빗금)가 있으면 그 표시를 따릅니다.
 - 학생과 다른 색(주로 빨간 펜)으로 쓴 글씨는 선생님의 정정·채점이니 studentAnswer로 읽지 않습니다.
+- 문제나 답안지가 요구한 꼴(거듭제곱, 소인수분해 꼴, 기약분수 등)로 쓰지 않으면 값이 같아도 틀림입니다 (예: 2²×3 자리에 2×2×3). 꼴은 맞고 괄호 등 표기만 다르면 정답으로 하고 review에 적습니다.
+- 인쇄된 빈칸(□, 괄호) 안에 쓴 작은 글씨도 학생 답입니다. 무응답으로 보기 전에 빈칸 안을 다시 확인합니다.
 - 읽을 수 없는 문항은 지어내지 말고 checks에 적습니다.`;
 
 const GRADE_KEY_RULE = `[답안지(정답)] 그림: 채점하지 말고 정답 확인에만 씁니다.
@@ -289,10 +291,12 @@ function repairJson(json) {
 function scoreSummary(result) {
   const questions = (result.questions || []).filter((q) => q && typeof q === 'object');
   if (!questions.length) throw new Error('시험지에서 문항을 찾지 못했습니다.');
-  // 배점이 하나도 보이지 않으면 100점 만점으로 똑같이 나눕니다.
+  // 배점이 하나도 보이지 않으면 100점 만점으로 똑같이 나눕니다. (문항 점수는 반올림하지 않아야 만점이 꼭 100점이 돼요)
+  // 이때 AI는 earned 에 맞은 비율(0~1)을 적어 보내므로, 부분 점수도 그 비율로 매깁니다.
   if (!questions.some((q) => (+q.points || 0) > 0)) {
-    const each = Math.round((100 / questions.length) * 10) / 10;
-    questions.forEach((q) => { q.points = each; q.earned = q.correct ? each : 0; });
+    const each = 100 / questions.length;
+    const ratio = (q) => (q.correct === true || q.correct === 'true' ? 1 : Math.min(Math.max(+q.earned || 0, 0), 1));
+    questions.forEach((q) => { q.earned = each * ratio(q); q.points = each; });
   }
   const types = new Map();
   for (const q of questions) {

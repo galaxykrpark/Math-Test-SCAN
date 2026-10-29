@@ -142,10 +142,10 @@ function readAsDataUrl(file) {
   });
 }
 
-// 큰 사진은 긴 변 1500px로 줄입니다. (폰 카메라 사진은 4000px 넘게 크고, 그대로 두면 폰 메모리가 모자라요)
-// 1500px이면 수학 글씨를 읽기에 충분하고, 올리는 양이 줄어 전송이 빨라지며 유료 AI의 사진 토큰(비용)도 줄어요.
+// 큰 사진은 긴 변 2000px로 줄입니다. (폰 카메라 사진은 4000px 넘게 크고, 그대로 두면 폰 메모리가 모자라요)
+// 두 쪽을 한 장에 찍으면 1500px로는 지수(위첨자) 같은 작은 글씨가 뭉개져서 2000px로 둡니다. (원본보다 전송량·비용은 훨씬 적어요)
 // 여기서는 품질을 높게(0.9) 두고, 실제로 보낼 때 labelImage에서 한 번만 0.85로 압축합니다. (두 번 낮게 압축하면 글씨가 뭉개져요)
-const SHRINK_MAX_SIDE = 1500;
+const SHRINK_MAX_SIDE = 2000;
 const SEND_JPEG_QUALITY = 0.85;
 function shrinkImage(dataUrl, maxSide = SHRINK_MAX_SIDE) {
   return new Promise((resolve) => {
