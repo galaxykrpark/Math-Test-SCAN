@@ -99,3 +99,12 @@ button.menu-pill { border: 0; cursor: pointer; }
   .practice-bar .btn-outline { color: #fff; }
   .toast { bottom: calc(20px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- 사진 돌리기 ---------- */
+/* 사진이 어느 쪽으로 누웠는지 보이도록 잘라 내지 않고 통째로 보여 줍니다. */
+.thumb img { object-fit: contain; background: #f4f4f8; }
+.thumb .rotate {
+  position: absolute; top: 6px; left: 6px; width: 32px; height: 32px; border-radius: 50%;
+  border: 0; background: rgba(22, 22, 29, .75); color: #fff; font-size: 18px; line-height: 1; cursor: pointer;
+}
+.thumb .rotate:disabled { opacity: .5; }

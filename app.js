@@ -166,6 +166,25 @@ function shrinkImage(dataUrl, maxSide = SHRINK_MAX_SIDE) {
   });
 }
 
+// 사진을 시계 방향으로 90° 돌립니다. (원문·학생 시험지·답안지를 같은 방향으로 세워 보내야 AI가 견주어 보기 쉬워요)
+function rotateImage(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.height;
+      canvas.height = img.width;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(canvas.width, 0);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.9));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 // AI 앱은 사진의 파일 이름을 못 볼 수 있어서, 사진 위쪽에 "[학생 시험지 1/2]" 같은 띠를 그려 넣습니다.
 function labelImage(dataUrl, label) {
   return new Promise((resolve) => {
@@ -224,6 +243,7 @@ function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
       <li class="thumb" data-id="${s.id}">
         <img src="${s.dataUrl}" alt="${esc(s.name)}">
         <div class="name">${i + 1}. ${esc(s.name)}</div>
+        <button type="button" class="rotate" aria-label="${esc(s.name)} 돌리기">↻</button>
         <button type="button" class="remove" aria-label="${esc(s.name)} 삭제">✕</button>
       </li>`).join('');
     zone.classList.toggle('has-files', store.length > 0);
@@ -231,9 +251,18 @@ function setupImageZone(zone, cameraInput, albumInput, list, store, what) {
     resetGrade(); // 시험지·답안지·원문이 바뀌면 이전 채점 결과는 맞지 않으니 지웁니다.
   }
 
-  zone.addEventListener('click', (e) => {
+  zone.addEventListener('click', async (e) => {
     const opener = e.target.closest('[data-open]');
     if (opener) return $(`#${opener.dataset.open}`).click();
+    const rotateBtn = e.target.closest('.rotate');
+    if (rotateBtn) {
+      const item = store.find((s) => s.id === rotateBtn.closest('.thumb').dataset.id);
+      if (!item) return;
+      rotateBtn.disabled = true;
+      item.dataUrl = await rotateImage(item.dataUrl);
+      render();
+      return;
+    }
     const removeBtn = e.target.closest('.remove');
     if (removeBtn) {
       const i = store.findIndex((s) => s.id === removeBtn.closest('.thumb').dataset.id);
