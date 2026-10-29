@@ -40,7 +40,7 @@ function renderToolPick() {
   $('#apiKey').value = aiSettings.keys[aiSettings.tool] || '';
   $('#apiModel').value = aiSettings.models[aiSettings.tool] || '';
   $('#apiModel').placeholder = `기본: ${tool.model}`;
-  $('#aiPill').textContent = '📲 AI 앱';
+  $('#aiPill').textContent = useApi() ? `🔑 ${tool.label}` : '📲 AI 앱';
 }
 
 $('#toolPick').addEventListener('change', (e) => {
@@ -144,7 +144,7 @@ function readAsDataUrl(file) {
 
 // 큰 사진은 긴 변 1500px로 줄입니다. (폰 카메라 사진은 4000px 넘게 크고, 그대로 두면 폰 메모리가 모자라요)
 // 1500px이면 수학 글씨를 읽기에 충분하고, 올리는 양이 줄어 전송이 빨라지며 유료 AI의 사진 토큰(비용)도 줄어요.
-// 여기서는 품질을 높게(0.9) 두고, 실제로 보낼 때 labelImage에서 한 번만 0.8로 압축합니다. (두 번 낮게 압축하면 글씨가 뭉개져요)
+// 여기서는 품질을 높게(0.9) 두고, 실제로 보낼 때 labelImage에서 한 번만 0.85로 압축합니다. (두 번 낮게 압축하면 글씨가 뭉개져요)
 const SHRINK_MAX_SIDE = 1500;
 const SEND_JPEG_QUALITY = 0.85;
 function shrinkImage(dataUrl, maxSide = SHRINK_MAX_SIDE) {
@@ -549,13 +549,18 @@ function gradeFiles() {
   gradeFilesReady ||= labeledImages().then((images) => images.map((img) => dataUrlToFile(img.dataUrl, img.fileName)));
   return gradeFilesReady;
 }
-const gradeHandoffText = () => handoffPrompt(GRADE_PROMPT, gradeRequest(), GRADE_EXAMPLE,
-  '사진 맨 위 띠에 [학생 시험지 1/2], [답안지(정답) …], [시험지 원문 …] 처럼 어떤 사진인지 적혀 있습니다.');
+const gradeHandoffText = () => handoffPrompt(gradeSystem(), gradeRequest(), GRADE_EXAMPLE,
+  '사진 맨 위 띠에 [학생 시험지 1/2] 처럼 어떤 사진인지 적혀 있습니다.');
 
-// 초1~중3 전체 단원 이름으로 문제 유형을 나누게 합니다.
+// 함께 보내는 사진(답안지·원문)이 있을 때만 그 규칙을 지시문에 넣습니다.
+const gradeSystem = () => gradePrompt({ keyCount: keys.length, origCount: origs.length });
+
+// 초1~중3 전체 단원 이름으로 문제 유형을 나누게 하고, 1단계의 주제학습 단원명도 알려 줍니다.
 function gradeRequest() {
   const unitNames = [...new Set(SCHOOL_GRADES.flatMap((g) => Object.values(CURRICULUM[g]).flat()).map((u) => u.name))];
-  return gradeText({ keyCount: keys.length, origCount: origs.length, unitNames });
+  return gradeText({
+    scanCount: scans.length, keyCount: keys.length, origCount: origs.length, topic: studentInfo().period, unitNames,
+  });
 }
 
 async function labeledImages() {
@@ -565,8 +570,8 @@ async function labeledImages() {
   }));
   return [
     ...await label(scans, '학생 시험지', '시험지'),
-    ...await label(keys, '답안지(정답) — 채점하지 말고 정답 확인용', '답안지'),
-    ...await label(origs, '시험지 원문 — 학생 글씨 없는 원본, 채점하지 말 것', '시험지원문'),
+    ...await label(keys, '답안지(정답)', '답안지'),
+    ...await label(origs, '시험지 원문', '시험지원문'),
   ];
 }
 
@@ -609,7 +614,7 @@ async function gradeScans() {
     $('#step2-1').scrollIntoView({ behavior: 'smooth' });
     renderGrade('loading');
     const result = await askAI({
-      system: GRADE_PROMPT, text: request, images, schema: GRADE_SCHEMA, schemaName: 'grade', effort: 'high',
+      system: gradeSystem(), text: request, images, schema: GRADE_SCHEMA, schemaName: 'grade', effort: 'high',
     });
     if (run !== gradeRun) return;
     finishGrade(result, tool.label);
