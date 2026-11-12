@@ -15,6 +15,211 @@
   <!-- ?v= 를 붙여 브라우저가 예전에 저장해 둔 파일 대신 새 파일을 받게 합니다 -->
   <link rel="stylesheet" href="style.css?v=20261027m1">
   <link rel="stylesheet" href="mobile.css?v=20261029d">
+  <!-- Lucide icons (unslop: emoji 아이콘 → 라인 아이콘) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    /* ── unslop 패스: 이 블록이 슬롭을 덮어씁니다 ── */
+
+    /* 1. Spacing — 4px 그리드, 균일한 여백 */
+    .workspace { gap: 16px; }
+    .card { padding: 20px; border-radius: 16px; }
+    .hero { padding: 24px 20px 20px; border-radius: 16px; gap: 16px; }
+
+    /* 2. Color — Warm 중립 팔레트, 보라·라임 글로우 제거 */
+    :root {
+      --bg: #f7f4ee;
+      --field: #fdfbf7;
+      --line: #e8e3d8;
+      --text: #1f1b16;
+      --muted: #7b7266;
+      --ink: #1f1b16;
+      --ink-2: #2e2a22;
+      /* 액센트: Warm world → 호박색(amber) */
+      --accent: #c46200;
+      --accent-soft: #fff4e2;
+      /* 보라 계열 완전 교체 */
+      --violet: #c46200;
+      --violet-2: #d97706;
+      --violet-soft: #fff4e2;
+      /* 라임 → 종이 느낌의 황금색으로 */
+      --lime: #d4a017;
+      --lime-soft: #fef9e7;
+    }
+
+    /* 배경: 색상 번짐 그라디언트 제거 → 단순 Warm 배경 */
+    body { background: var(--bg); }
+
+    /* 히어로: 보라·라임 글로우 레이어 제거 */
+    .hero::before,
+    .hero::after { display: none; }
+    .hero { background: var(--ink); }
+
+    /* 인사 헤드라인 emoji·감탄문 → 조용한 컨텍스트 레이블 */
+    .hero-hi {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin: 0 0 8px;
+    }
+    /* 히어로 h1: 무게 800 → 500, 크기 조정 */
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 500;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 21px; }
+    }
+    /* 하이라이트 스팬: 형광 라임 → 차분한 언더라인 */
+    .hero .hl {
+      background: none;
+      color: #fff;
+      padding: 0;
+      border-radius: 0;
+      border-bottom: 2px solid var(--lime);
+    }
+
+    /* 브랜드 닷: 글로우 제거 */
+    .brand { font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
+    .brand-dot { background: var(--lime); box-shadow: none; }
+
+    /* 메뉴 필: 보라 → Warm 액센트 */
+    .menu-pill { font-weight: 500; font-size: 13px; }
+
+    /* 3. Icons — 모든 emoji 아이콘 → Lucide 라인 아이콘 */
+    .ico { display: none; } /* emoji .ico 숨김, SVG 아이콘으로 대체 */
+    .block-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      font-weight: 500;
+      margin: 0 0 16px;
+    }
+    .block-title .title-icon {
+      display: flex;
+      align-items: center;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .block-title .title-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
+
+    /* 4. Copy — 단계 뱃지를 조용한 mono 숫자로 */
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: ui-monospace, monospace;
+      background: var(--line);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* 5. Type — 본문 자간, 행간 정돈 */
+    .hero-sub { font-size: 14px; color: #b0a89a; line-height: 1.6; margin: 0; }
+
+    /* 6. 버튼 — emoji 대신 아이콘 사용, 그라디언트 제거 */
+    .btn-cam {
+      font-size: 15px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-cam svg { width: 18px; height: 18px; stroke-width: 1.5; flex-shrink: 0; }
+    .btn-album {
+      font-size: 14px;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-album svg { width: 16px; height: 16px; stroke-width: 1.5; flex-shrink: 0; }
+
+    /* AI 채점 메인 버튼: 그라디언트 없는 솔리드 */
+    .btn-grade {
+      background: var(--ink);
+      color: #efe9de;
+      font-weight: 500;
+      font-size: 16px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 0;
+    }
+    .btn-grade svg { width: 18px; height: 18px; stroke-width: 1.5; }
+
+    /* PDF 보내기 버튼 */
+    .btn-grade#btnPdfShare { background: var(--ink); }
+
+    /* AI 앱 handoff 버튼: 그라디언트 → 솔리드 */
+    .btn-send {
+      background: var(--ink) !important;
+      color: #efe9de !important;
+      box-shadow: none !important;
+      font-weight: 500 !important;
+      border-radius: 10px !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-send svg { width: 18px; height: 18px; stroke-width: 1.5; }
+
+    /* Handoff: 보라 테두리 → Warm 선 */
+    .handoff {
+      border-color: var(--line);
+      background: var(--field);
+    }
+    .handoff-steps li::marker { color: var(--accent); }
+
+    /* 새 학생 버튼 */
+    .new-student {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 400;
+      font-size: 14px;
+    }
+    .new-student svg { width: 16px; height: 16px; stroke-width: 1.5; }
+
+    /* chip nav */
+    .steps-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+
+    /* mode-pick 라디오 선택: 보라 → 액센트 */
+    .mode:has(input:checked) { border-color: var(--accent); }
+    .mode input { accent-color: var(--accent); }
+    .tool.on { border-color: var(--accent); background: var(--accent-soft); }
+    .tool:has(input:focus-visible) { box-shadow: 0 0 0 4px var(--accent-soft); }
+
+    /* drop-tag: 선택/필수 뱃지 */
+    .drop-tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--line);
+      color: var(--muted);
+    }
+
+    /* 9. Motion — pulse 애니메이션 제거, 단순 press scale */
+    @keyframes pulse { 50% { transform: scale(1.02); } }
+    .handoff .btn-paste.pulse { animation: pulse 1.2s ease-in-out 3; box-shadow: none; }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -29,9 +234,10 @@
       <!-- 환영 배너 -->
       <section class="hero">
         <div class="hero-text">
-          <p class="hero-hi">선생님, 오늘도 수고 많으세요 👋</p>
-          <h1><span class="hl">시험지</span>를 찍으면 채점하고 점수와 보충문제까지 드려요</h1>
-          <p class="hero-sub">카메라로 시험지와 답안지를 찍고, 폰에 있는 AI로 채점한 뒤 PDF 문서로 보내요.</p>
+          <!-- unslop: "선생님, 오늘도 수고 많으세요 👋" → 조용한 컨텍스트 레이블 -->
+          <p class="hero-hi">수학 AI 채점 도구</p>
+          <h1><span class="hl">시험지</span>를 찍으면 채점하고 보충문제까지 드려요</h1>
+          <p class="hero-sub">카메라로 시험지와 답안지를 찍고, 폰의 AI로 채점한 뒤 PDF로 보냅니다.</p>
         </div>
         <nav class="steps-nav" aria-label="작성 단계">
           <a href="#step0" class="chip">AI 선택</a>
@@ -40,18 +246,24 @@
           <a href="#step2-1" class="chip">점수</a>
           <a href="#step2-3" class="chip">보충</a>
           <a href="#step3" class="chip">PDF</a>
-          <a href="guide.html" class="chip">📖 사용법</a>
+          <a href="guide.html" class="chip">사용법</a>
         </nav>
       </section>
 
       <!-- 0. AI 선택 -->
       <section class="card step" id="step0">
-        <h2 class="block-title"><span class="step-badge">AI</span><span class="ico">🤖</span> 채점할 AI 고르기</h2>
+        <h2 class="block-title">
+          <span class="step-badge">AI</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2Z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>
+          </span>
+          채점할 AI 고르기
+        </h2>
         <div class="mode-pick" role="radiogroup" aria-label="연결 방식">
           <label class="mode"><input type="radio" name="aiMode" value="app">
-            <span><b>📲 내 폰의 AI 앱으로 자동 보내기</b><small>버튼 한 번에 사진·지시문을 AI 앱으로 보내고, AI 답을 복사해 돌아오면 자동으로 채점돼요. 키 필요 없음</small></span></label>
+            <span><b>내 폰의 AI 앱으로 자동 보내기</b><small>버튼 한 번에 사진·지시문을 AI 앱으로 보내고, AI 답을 복사해 돌아오면 자동으로 채점돼요. 키 필요 없음</small></span></label>
           <label class="mode"><input type="radio" name="aiMode" value="api">
-            <span><b>🔑 API 키로 자동 채점</b><small>키를 한 번 넣으면 이 앱 안에서 버튼 한 번에 끝나요</small></span></label>
+            <span><b>API 키로 자동 채점</b><small>키를 한 번 넣으면 이 앱 안에서 버튼 한 번에 끝나요</small></span></label>
         </div>
         <div class="key-box hidden" id="keyBox">
           <!-- 앱으로 보내기는 공유 창에서 AI 앱을 고르므로, AI 고르기는 API 키로 채점할 때만 보입니다. -->
@@ -61,7 +273,7 @@
             <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="여기에 키를 붙여 넣으세요">
             <button type="button" class="btn-outline" id="btnKeyShow">보기</button>
           </div>
-          <p class="hint"><a id="keyLink" href="#" target="_blank" rel="noopener">🔗 키 받는 곳</a> · 키는 이 폰에만 저장되고, 고른 AI 회사로만 보내져요.</p>
+          <p class="hint"><a id="keyLink" href="#" target="_blank" rel="noopener">키 받는 곳</a> · 키는 이 폰에만 저장되고, 고른 AI 회사로만 보내져요.</p>
           <details class="more">
             <summary>모델 바꾸기 (보통은 그대로 두세요)</summary>
             <input id="apiModel" spellcheck="false" autocomplete="off">
@@ -71,7 +283,13 @@
 
       <!-- 1. 학생 및 리포트 정보 -->
       <section class="card step c1" id="step1">
-        <h2 class="block-title"><span class="step-badge">1</span><span class="ico">🧒</span> 학생 정보</h2>
+        <h2 class="block-title">
+          <span class="step-badge">1</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          학생 정보
+        </h2>
         <div class="grid-2">
           <div class="span-2">
             <label for="academyName">학원명 <span class="label-note">(한 번 입력하면 기억해요)</span></label>
@@ -90,70 +308,112 @@
             <input id="reportPeriod" maxlength="20" placeholder="예: 일차방정식">
           </div>
         </div>
-        <button type="button" class="btn-outline wide new-student" id="btnNewStudent">🔄 새 학생 시작 (사진·채점 결과 지우기)</button>
+        <button type="button" class="btn-outline wide new-student" id="btnNewStudent">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          새 학생 시작
+        </button>
         <p class="hint">작업 중인 사진과 채점 결과는 이 폰에 저장돼서, 앱을 다시 열어도 이어서 할 수 있어요.</p>
       </section>
 
       <!-- 2. 시험지 원문 · 학생 시험지 · 답안지 사진 -->
       <section class="card step c2" id="step2">
-        <h2 class="block-title"><span class="step-badge">2</span><span class="ico">📸</span> 원문 · 시험지 · 답안지 사진</h2>
+        <h2 class="block-title">
+          <span class="step-badge">2</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          </span>
+          사진 올리기
+        </h2>
         <div class="drop-pair">
           <div class="drop-col">
-            <p class="drop-label"><span class="drop-tag opt orig">선택</span> 📄 시험지 원문(DB예정)</p>
+            <p class="drop-label"><span class="drop-tag opt orig">선택</span> 시험지 원문</p>
             <div class="dropzone orig" id="origDropzone">
               <input type="file" id="origCamera" accept="image/*" capture="environment" hidden>
               <input type="file" id="origInput" accept="image/*" multiple hidden>
               <div class="cam-btns">
-                <button type="button" class="btn-cam" data-open="origCamera">📷 사진 찍기</button>
-                <button type="button" class="btn-album" data-open="origInput">🖼️ 앨범</button>
+                <button type="button" class="btn-cam" data-open="origCamera">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  사진 찍기
+                </button>
+                <button type="button" class="btn-album" data-open="origInput">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  앨범
+                </button>
               </div>
-              <p class="dz-sub cam-sub">아무것도 안 쓴 빈 시험지를 찍으면 AI가 학생 글씨를 더 잘 구분해요</p>
+              <p class="dz-sub cam-sub">빈 시험지를 찍으면 AI가 학생 글씨를 더 잘 구분해요</p>
               <ul class="thumbs" id="origThumbs"></ul>
             </div>
           </div>
           <div class="drop-col">
-            <p class="drop-label"><span class="drop-tag">필수</span> 📝 학생 시험지</p>
+            <p class="drop-label"><span class="drop-tag">필수</span> 학생 시험지</p>
             <div class="dropzone" id="dropzone">
               <input type="file" id="scanCamera" accept="image/*" capture="environment" hidden>
               <input type="file" id="scanInput" accept="image/*" multiple hidden>
               <div class="cam-btns">
-                <button type="button" class="btn-cam" data-open="scanCamera">📷 사진 찍기</button>
-                <button type="button" class="btn-album" data-open="scanInput">🖼️ 앨범</button>
+                <button type="button" class="btn-cam" data-open="scanCamera">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  사진 찍기
+                </button>
+                <button type="button" class="btn-album" data-open="scanInput">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  앨범
+                </button>
               </div>
               <p class="dz-sub cam-sub">학생이 푼 시험지를 찍어 주세요 · 최대 10장</p>
               <ul class="thumbs" id="thumbs"></ul>
             </div>
           </div>
           <div class="drop-col">
-            <p class="drop-label"><span class="drop-tag opt">선택</span> ✅ 답안지 (정답)</p>
+            <p class="drop-label"><span class="drop-tag opt">선택</span> 답안지 (정답)</p>
             <div class="dropzone key" id="keyDropzone">
               <input type="file" id="keyCamera" accept="image/*" capture="environment" hidden>
               <input type="file" id="keyInput" accept="image/*" multiple hidden>
               <div class="cam-btns">
-                <button type="button" class="btn-cam" data-open="keyCamera">📷 사진 찍기</button>
-                <button type="button" class="btn-album" data-open="keyInput">🖼️ 앨범</button>
+                <button type="button" class="btn-cam" data-open="keyCamera">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  사진 찍기
+                </button>
+                <button type="button" class="btn-album" data-open="keyInput">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  앨범
+                </button>
               </div>
               <p class="dz-sub cam-sub">정답지를 찍으면 그 정답으로 채점해요 · 없으면 AI가 직접 풀어요</p>
               <ul class="thumbs" id="keyThumbs"></ul>
             </div>
           </div>
         </div>
-        <button type="button" class="btn-grade" id="btnGrade">🤖 AI로 점수계산</button>
+        <button type="button" class="btn-grade" id="btnGrade">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2Z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>
+          AI로 점수 계산
+        </button>
         <p class="hint" id="scanMsg" aria-live="polite"></p>
         <div class="handoff-box" id="gradeHandoff"></div>
       </section>
 
       <!-- 2-1. 시험지 스캔 점수 -->
       <section class="card step c2" id="step2-1">
-        <h2 class="block-title"><span class="step-badge wide">2-1</span><span class="ico">💯</span> 채점 점수</h2>
+        <h2 class="block-title">
+          <span class="step-badge">2-1</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+          </span>
+          채점 점수
+        </h2>
         <div class="grade-box" id="gradeBox" aria-live="polite">
-          <p class="grade-empty">시험지 사진을 찍고 'AI로 점수계산'을 누르면 채점 결과가 여기에 나타나요.</p>
+          <p class="grade-empty">시험지 사진을 찍고 'AI로 점수 계산'을 누르면 채점 결과가 여기에 나타나요.</p>
         </div>
       </section>
 
       <!-- 2-2. 채점 상세 설명 -->
       <section class="card step c2" id="step2-2">
-        <h2 class="block-title"><span class="step-badge wide">2-2</span><span class="ico">📋</span> 상세 설명</h2>
+        <h2 class="block-title">
+          <span class="step-badge">2-2</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+          </span>
+          상세 설명
+        </h2>
         <div class="detail-box" id="gradeDetail" aria-live="polite">
           <p class="grade-empty">채점이 끝나면 자세한 설명이 여기에 나타나요.</p>
         </div>
@@ -161,8 +421,14 @@
 
       <!-- 2-3. 보충 문제 -->
       <section class="card step c2" id="step2-3">
-        <h2 class="block-title"><span class="step-badge wide">2-3</span><span class="ico">🧩</span> 보충 문제</h2>
-        <p class="desc">점수가 낮은 유형(70% 미만)을 골라 두었어요. 문제 수를 고르고 '보충 문제 만들기'를 누르세요.</p>
+        <h2 class="block-title">
+          <span class="step-badge">2-3</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20v-6"/><path d="M22 20V8"/></svg>
+          </span>
+          보충 문제
+        </h2>
+        <p class="desc">점수가 낮은 유형(70% 미만)을 골라 두었어요. 문제 수를 고르고 보충 문제 만들기를 누르세요.</p>
         <div class="practice-pick" id="practicePick">
           <p class="grade-empty">채점이 끝나면 보충할 유형이 여기에 나타나요.</p>
         </div>
@@ -174,7 +440,7 @@
               <option value="10">10문제</option>
             </select>
           </label>
-          <button type="button" class="btn-practice" id="btnPractice">🧩 보충 문제 만들기</button>
+          <button type="button" class="btn-practice" id="btnPractice">보충 문제 만들기</button>
         </div>
         <div class="handoff-box" id="practiceHandoff"></div>
         <div class="practice-result" id="practiceResult" aria-live="polite"></div>
@@ -182,13 +448,24 @@
 
       <!-- 3. PDF 문서로 제출 -->
       <section class="card step" id="step3">
-        <h2 class="block-title"><span class="step-badge">3</span><span class="ico">📄</span> 채점 결과 제출 (PDF)</h2>
+        <h2 class="block-title">
+          <span class="step-badge">3</span>
+          <span class="title-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15v3"/><path d="M12 12v6"/><path d="M15 15v3"/></svg>
+          </span>
+          채점 결과 제출
+        </h2>
         <p class="desc">채점 점수, 유형별 점수, 상세 설명과 (만들었다면) 보충 문제를 PDF 파일 하나로 만들어요.</p>
         <div class="pdf-btns">
-          <button type="button" class="btn-grade" id="btnPdfShare" disabled>📤 PDF 보내기 (카톡·메일·드라이브)</button>
-          <button type="button" class="btn-outline wide" id="btnPdfSave" disabled>💾 폰에 PDF 저장 (보내기가 안 될 때)</button>
+          <button type="button" class="btn-grade" id="btnPdfShare" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+            PDF 보내기 (카톡·메일·드라이브)
+          </button>
+          <button type="button" class="btn-outline wide" id="btnPdfSave" disabled>
+            폰에 PDF 저장 (보내기가 안 될 때)
+          </button>
         </div>
-        <p class="hint">※ 위 두 버튼은 순서가 없어요. 둘 중 <b>하나만</b> 누르세요. 먼저 <b>보내기</b>를 눌러 보고, 안 되면 <b>저장</b> 후 내 파일에서 직접 공유하세요.</p>
+        <p class="hint">위 두 버튼은 순서가 없어요. 둘 중 <b>하나만</b> 누르세요. 먼저 <b>보내기</b>를 눌러 보고, 안 되면 <b>저장</b> 후 내 파일에서 직접 공유하세요.</p>
         <p class="hint" id="pdfMsg">채점이 끝나면 누를 수 있어요.</p>
       </section>
     </div>
